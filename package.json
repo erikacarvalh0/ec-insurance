@@ -12,5 +12,9 @@
     "test": "node --test",
     "test:domain": "node --test packages/*/src/*.test.mjs",
     "test:dashboard": "node --test apps/web/src/features/dashboard/*.test.mjs"
+  },
+  "dependencies": {
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
   }
 }
