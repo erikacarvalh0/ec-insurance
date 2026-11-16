@@ -46,3 +46,39 @@ test('does not leak errors from the handler', async () => {
   assert.equal(response.statusCode, 500);
   assert.doesNotMatch(response.payload, /private secret/);
 });
+
+test('correlates requests and emits structured metadata without PII', async () => {
+  const entries = [];
+  const adapter = createNodeHttpAdapter(async () => ({
+    status: 200,
+    headers: { 'X-Request-Id': 'untrusted-override' },
+    body: { ok: true },
+  }), { logger: { info: (entry) => entries.push(JSON.parse(entry)) } });
+  const response = fakeResponse();
+  await adapter({
+    method: 'GET',
+    url: '/api/leads?email=private@example.com',
+    headers: { 'x-request-id': 'safe-id_123', authorization: 'Bearer secret' },
+  }, response);
+
+  assert.equal(response.headers['X-Request-Id'], 'safe-id_123');
+  assert.equal(entries.length, 1);
+  assert.deepEqual(Object.keys(entries[0]), ['event', 'requestId', 'method', 'status', 'durationMs']);
+  assert.equal(entries[0].requestId, 'safe-id_123');
+  assert.equal(entries[0].status, 200);
+  assert.ok(entries[0].durationMs >= 0);
+  assert.doesNotMatch(JSON.stringify(entries), /private@example.com|Bearer|secret/);
+});
+
+test('rejects unsafe incoming request IDs and logs failures without secrets', async () => {
+  const entries = [];
+  const adapter = createNodeHttpAdapter(async () => { throw new Error('secret password'); }, {
+    logger: { info: (entry) => entries.push(JSON.parse(entry)) },
+  });
+  const response = fakeResponse();
+  await adapter({ method: 'POST', headers: { 'x-request-id': 'bad\nheader' } }, response);
+  assert.match(response.headers['X-Request-Id'], /^[0-9a-f-]{36}$/);
+  assert.equal(entries[0].status, 500);
+  assert.equal(entries[0].requestId, response.headers['X-Request-Id']);
+  assert.doesNotMatch(JSON.stringify(entries), /secret password|bad\\nheader/);
+});
