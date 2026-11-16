@@ -1,5 +1,6 @@
 import { createElement as h, useState } from 'react';
 import { InteractiveIntakeForm } from './features/intake/InteractiveIntakeForm.mjs';
+import { Navigation } from './Navigation.mjs';
 
 const TYPES = ['auto', 'residential', 'life', 'health', 'business', 'travel'];
 
@@ -7,7 +8,7 @@ export function App() {
   const [insuranceType, setInsuranceType] = useState('auto');
 
   return h('main', null,
-    h('header', null, h('h1', null, 'EC Insurance')),
+    h('header', null, h('h1', null, 'EC Insurance'), h(Navigation, { view: 'public' })),
     h('nav', { 'aria-label': 'Insurance products' },
       h('label', { htmlFor: 'insurance-product' }, 'Choose your insurance'),
       h('select', {
