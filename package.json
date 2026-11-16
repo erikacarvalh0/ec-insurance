@@ -16,8 +16,8 @@
     "start:api:db": "node packages/api/src/start-prisma.mjs",
     "db:migrate": "prisma migrate deploy",
     "db:generate": "prisma generate",
-    "dev:web": "vite --config apps/web/vite.config.mjs --root apps/web",
-    "build:web": "vite build --config apps/web/vite.config.mjs --root apps/web"
+    "dev:web": "vite apps/web --config apps/web/vite.config.mjs",
+    "build:web": "vite build apps/web --config apps/web/vite.config.mjs"
   },
   "dependencies": {
     "react": "^19.2.0",
