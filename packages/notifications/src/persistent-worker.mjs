@@ -6,18 +6,19 @@ export function createNotificationWorker({prisma,adapter,now=()=>new Date(),maxA
   async processOne(){
    const job=await prisma.notificationJob.findFirst({where:{status:'PENDING',nextAttemptAt:{lte:now()}},orderBy:[{nextAttemptAt:'asc'},{createdAt:'asc'}]});
    if(!job)return{status:'idle'};
-   const claim=await prisma.notificationJob.updateMany({where:{id:job.id,status:'PENDING',attempts:job.attempts},data:{status:'PROCESSING',leaseExpiresAt:new Date(now().getTime()+leaseMs)}});
+   const leaseExpiresAt=new Date(now().getTime()+leaseMs);
+   const claim=await prisma.notificationJob.updateMany({where:{id:job.id,status:'PENDING',attempts:job.attempts},data:{status:'PROCESSING',leaseExpiresAt}});
    if(claim.count!==1)return{status:'contended'};
    try{
     await adapter.send({idempotencyKey:job.idempotencyKey,subject:job.subject,body:job.body});
-    await prisma.notificationJob.update({where:{id:job.id},data:{status:'SENT',leaseExpiresAt:null,attempts:job.attempts+1}});
-    return{status:'sent'};
+    const completed=await prisma.notificationJob.updateMany({where:{id:job.id,status:'PROCESSING',attempts:job.attempts,leaseExpiresAt},data:{status:'SENT',leaseExpiresAt:null,attempts:job.attempts+1}});
+    return{status:completed.count===1?'sent':'stale'};
    }catch{
     const attempts=job.attempts+1;
     const dead=attempts>=maxAttempts;
     const delayMs=Math.min(3600_000,1000*2**Math.min(attempts,12));
-    await prisma.notificationJob.update({where:{id:job.id},data:{status:dead?'DEAD_LETTER':'PENDING',leaseExpiresAt:null,attempts,...(dead?{}:{nextAttemptAt:new Date(now().getTime()+delayMs)})}});
-    return{status:dead?'dead-letter':'retry'};
+    const failed=await prisma.notificationJob.updateMany({where:{id:job.id,status:'PROCESSING',attempts:job.attempts,leaseExpiresAt},data:{status:dead?'DEAD_LETTER':'PENDING',leaseExpiresAt:null,attempts,...(dead?{}:{nextAttemptAt:new Date(now().getTime()+delayMs)})}});
+    return{status:failed.count!==1?'stale':dead?'dead-letter':'retry'};
    }
   }
  };
