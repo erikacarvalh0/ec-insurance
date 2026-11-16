@@ -4,7 +4,9 @@ export function createHttpLoginHandler({ login }) {
   if (typeof login !== 'function') throw new TypeError('Login handler is required');
 
   return async function handleHttpLogin(request) {
-    if (request?.method !== 'POST') return login({ method: request?.method });
+    if (request?.method !== 'POST') {
+      return { status: 405, headers: { Allow: 'POST' }, body: { error: 'Method not allowed' } };
+    }
     if (!request.headers?.['content-type']?.toLowerCase().startsWith('application/json')) {
       return { status: 415, body: { error: 'JSON content type required' } };
     }
