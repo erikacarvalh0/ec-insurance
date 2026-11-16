@@ -1,11 +1,14 @@
 // Scope lead queries by the authenticated actor; never expose contact details.
+const STATUS_FILTERS = new Set(['received','processing','quoted','manual_review','contacted','completed','cancelled']);
+const TYPE_FILTERS = new Set(['auto','residential','life','health','business','travel']);
+
 export function createPrismaLeadListRepository(prisma) {
   if (typeof prisma?.lead?.findMany !== 'function') {
     throw new TypeError('Prisma lead.findMany is required');
   }
 
   return {
-    async list(actor, { limit = 100, offset = 0 } = {}) {
+    async list(actor, { limit = 100, offset = 0, status, insuranceType } = {}) {
       if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100 || !Number.isSafeInteger(offset) || offset < 0 || offset > 100_000) {
         throw new RangeError('Invalid pagination');
       }
@@ -20,6 +23,9 @@ export function createPrismaLeadListRepository(prisma) {
       } else {
         throw new Error('Forbidden');
       }
+
+      if ((status !== undefined && !STATUS_FILTERS.has(status)) || (insuranceType !== undefined && !TYPE_FILTERS.has(insuranceType))) throw new TypeError('Invalid filters');
+      where = { ...where, ...(status ? { status: status.toUpperCase() } : {}), ...(insuranceType ? { insuranceType: insuranceType.toUpperCase() } : {}) };
 
       const records = await prisma.lead.findMany({
         where,
