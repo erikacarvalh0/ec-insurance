@@ -26,11 +26,18 @@ export function App({ pathname = typeof window === 'undefined' ? '/' : window.lo
     }
   }
 
+  function handleLogout() {
+    setSessionToken(null);
+    setLoginError('');
+  }
+
   const brokerView = pathname === '/broker';
 
   return h('main', null,
     h('header', null, h('h1', null, 'EC Insurance'), h(Navigation, { view: brokerView ? 'broker' : 'public' })),
-    brokerView ? (sessionToken ? h(BrokerDashboard, { token: sessionToken }) : h(LoginForm, { onSubmit: handleLogin, error: loginError, submitting })) : h('nav', { 'aria-label': 'Insurance products' },
+    brokerView ? (sessionToken ? h('section', { 'aria-label': 'Broker workspace' },
+      h('button', { type: 'button', onClick: handleLogout }, 'Sign out'),
+      h(BrokerDashboard, { token: sessionToken })) : h(LoginForm, { onSubmit: handleLogin, error: loginError, submitting })) : h('nav', { 'aria-label': 'Insurance products' },
       h('label', { htmlFor: 'insurance-product' }, 'Choose your insurance'),
       h('select', {
         id: 'insurance-product',
