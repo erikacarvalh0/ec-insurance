@@ -1,10 +1,10 @@
-import { createElement as h, useState } from 'react';
+import { createElement as h, useCallback, useEffect, useState } from 'react';
 import { InteractiveIntakeForm } from './features/intake/InteractiveIntakeForm.mjs';
 import { Navigation } from './Navigation.mjs';
 import { BrokerDashboard } from './features/dashboard/BrokerDashboard.mjs';
 import { LoginForm } from './features/auth/LoginForm.mjs';
 import { loginBroker } from './features/auth/client.mjs';
-import { isSessionTokenActive } from './features/auth/session.mjs';
+import { isSessionTokenActive, watchSessionExpiration } from './features/auth/session.mjs';
 
 const TYPES = ['auto', 'residential', 'life', 'health', 'business', 'travel'];
 
@@ -28,10 +28,14 @@ export function App({ pathname = typeof window === 'undefined' ? '/' : window.lo
     }
   }
 
-  function handleLogout() {
+  const handleLogout = useCallback(() => {
     setSessionToken(null);
     setLoginError('');
-  }
+  }, []);
+
+  useEffect(() => {
+    if (sessionToken) return watchSessionExpiration(sessionToken, handleLogout);
+  }, [sessionToken, handleLogout]);
 
   const brokerView = pathname === '/broker';
 
@@ -39,7 +43,7 @@ export function App({ pathname = typeof window === 'undefined' ? '/' : window.lo
     h('header', null, h('h1', null, 'EC Insurance'), h(Navigation, { view: brokerView ? 'broker' : 'public' })),
     brokerView ? (sessionToken ? h('section', { 'aria-label': 'Broker workspace' },
       h('button', { type: 'button', onClick: handleLogout }, 'Sign out'),
-      h(BrokerDashboard, { token: sessionToken })) : h(LoginForm, { onSubmit: handleLogin, error: loginError, submitting })) : h('nav', { 'aria-label': 'Insurance products' },
+      h(BrokerDashboard, { token: sessionToken, onSessionExpired: handleLogout })) : h(LoginForm, { onSubmit: handleLogin, error: loginError, submitting })) : h('nav', { 'aria-label': 'Insurance products' },
       h('label', { htmlFor: 'insurance-product' }, 'Choose your insurance'),
       h('select', {
         id: 'insurance-product',
