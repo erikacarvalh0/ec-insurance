@@ -1,9 +1,10 @@
 export function createPrismaLeadAssignmentRepository(prisma) {
- if(typeof prisma?.$transaction!=='function'||typeof prisma?.user?.findFirst!=='function')throw new TypeError('Prisma transaction and user lookup required');
+ if(!prisma || typeof prisma !== 'object')throw new TypeError('Prisma client required');
  return{
   async assign(actor,id,assigneeId){
    if(!actor?.userId||!['manager','admin'].includes(actor.role)||(actor.role==='manager'&&!actor.teamId))throw new Error('Forbidden');
    if(![id,assigneeId].every(x=>typeof x==='string'&&/^[A-Za-z0-9_-]{1,128}$/.test(x)))throw new TypeError('Invalid assignment');
+   if(typeof prisma.$transaction!=='function')throw new TypeError('Prisma transaction required');
    return prisma.$transaction(async(tx)=>{
     const where={id,...(actor.role==='manager'?{teamId:actor.teamId}:{})};
     const lead=await tx.lead.findFirst({where,select:{ownerId:true,teamId:true}});
