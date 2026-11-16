@@ -7,6 +7,8 @@ test('Prisma entrypoint instantiates generated Prisma client and starts persiste
   assert.match(source, /PrismaClient/);
   assert.match(source, /createPrismaSecureRuntime/);
   assert.match(source, /DATABASE_URL/);
+  assert.match(source, /createPrismaLogin/);
+  assert.match(source, /issueToken/);
 });
 
 test('package exposes Prisma migration and API start commands', () => {
