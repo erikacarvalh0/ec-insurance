@@ -1,3 +1,4 @@
+import { createPrismaLeadStatusHistoryRepository } from '../../leads/src/status-history-repository.mjs';
 import { createPrismaLeadRepository } from '../../leads/src/repository.mjs';
 import { createPrismaLeadListRepository } from '../../leads/src/list-repository.mjs';
 import { createPrismaLeadDetailRepository } from '../../leads/src/detail-repository.mjs';
@@ -15,6 +16,7 @@ export function createPrismaSecureRuntime({ prisma, verifyToken, login, loginLim
     leadListRepository: createPrismaLeadListRepository(prisma),
     leadDetailRepository: createPrismaLeadDetailRepository(prisma),
     leadStatusRepository: createPrismaLeadStatusRepository(prisma),
+    leadStatusHistoryRepository: createPrismaLeadStatusHistoryRepository(prisma),
     checkDatabase: () => checkDatabaseConnection(prisma),
     verifyToken,
     login,
