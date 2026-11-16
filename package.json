@@ -1,0 +1,16 @@
+{
+  "name": "ec-insurance",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "npm@10.9.2",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "test": "node --test",
+    "test:domain": "node --test packages/*/src/*.test.mjs",
+    "test:dashboard": "node --test apps/web/src/features/dashboard/*.test.mjs"
+  }
+}
