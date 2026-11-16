@@ -7,6 +7,7 @@ function fixture({ ownerId='broker-old', teamId='team-1', brokerTeam='team-1', c
  const prisma={
   user:{findFirst:async({where})=>{calls.push(['user',where]);return where.id==='broker-new'&&brokerTeam===where.teamId?{id:'broker-new'}:null;}},
   $transaction:async(run)=>run({
+   user:{findFirst:async({where})=>{calls.push(['user',where]);return where.id==='broker-new'&&brokerTeam===where.teamId?{id:'broker-new'}:null;}},
    lead:{findFirst:async({where})=>{calls.push(['find',where]);return where.id==='lead-1'&&(!where.teamId||where.teamId===teamId)?{ownerId,teamId}:null;},updateMany:async(x)=>{calls.push(['update',x]);return{count:conflict?0:1};}},
    leadAssignmentHistory:{create:async(x)=>{calls.push(['audit',x]);return{x};}},
   }),
