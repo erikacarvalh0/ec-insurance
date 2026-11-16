@@ -15,7 +15,8 @@
     "start:api": "node packages/api/src/start.mjs",
     "start:api:db": "node packages/api/src/start-prisma.mjs",
     "db:migrate": "prisma migrate deploy",
-    "db:generate": "prisma generate"
+    "db:generate": "prisma generate",
+    "preview:web": "node apps/web/src/preview.mjs"
   },
   "dependencies": {
     "react": "^19.2.0",
