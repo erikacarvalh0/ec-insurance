@@ -20,8 +20,21 @@ export function createProtectedLeadsHandler({ verifyToken, leadListRepository })
     }
     if (!actor) return { status: 401, body: { error: 'Unauthorized' } };
 
+    let pagination;
     try {
-      const leads = await leadListRepository.list(actor);
+      const query = new URL(request.url ?? '/api/leads', 'http://localhost').searchParams;
+      const limit = query.has('limit') ? Number(query.get('limit')) : 100;
+      const offset = query.has('offset') ? Number(query.get('offset')) : 0;
+      if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100 || !Number.isSafeInteger(offset) || offset < 0 || offset > 100_000) {
+        return { status: 400, body: { error: 'Invalid pagination' } };
+      }
+      pagination = { limit, offset };
+    } catch {
+      return { status: 400, body: { error: 'Invalid pagination' } };
+    }
+
+    try {
+      const leads = await leadListRepository.list(actor, pagination);
       return { status: 200, headers: { 'Cache-Control': 'no-store' }, body: { leads } };
     } catch (error) {
       if (error?.message === 'Forbidden') return { status: 403, body: { error: 'Forbidden' } };
