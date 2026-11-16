@@ -31,10 +31,13 @@ export function createProtectedLeadsHandler({ verifyToken, leadListRepository })
       if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100 || !Number.isSafeInteger(offset) || offset < 0 || offset > 100_000) {
         return { status: 400, body: { error: 'Invalid pagination' } };
       }
+      if (query.getAll('search').length > 1) return { status: 400, body: { error: 'Invalid search' } };
+      const search = query.get('search') ?? undefined;
+      if (search !== undefined && !/^[A-Za-z0-9_-]{2,64}$/.test(search)) return { status: 400, body: { error: 'Invalid search' } };
       const status = query.get('status') ?? undefined;
       const insuranceType = query.get('insuranceType') ?? undefined;
       if ((status !== undefined && !STATUS_FILTERS.has(status)) || (insuranceType !== undefined && !TYPE_FILTERS.has(insuranceType))) return { status: 400, body: { error: 'Invalid filters' } };
-      pagination = { limit, offset, ...(status ? { status } : {}), ...(insuranceType ? { insuranceType } : {}) };
+      pagination = { limit, offset, ...(status ? { status } : {}), ...(insuranceType ? { insuranceType } : {}), ...(search ? { search } : {}) };
     } catch {
       return { status: 400, body: { error: 'Invalid pagination' } };
     }
