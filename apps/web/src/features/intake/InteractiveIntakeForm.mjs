@@ -1,20 +1,22 @@
-import { createElement as h, useMemo, useState } from 'react';
+import { createElement as h, useRef, useState } from 'react';
 
 import { IntakeForm } from './IntakeForm.mjs';
 import { createIntakeController } from './controller.mjs';
 import { submitInsuranceIntake } from './submit.mjs';
 
+const defaultCreateKey = () => crypto.randomUUID();
+
 export function InteractiveIntakeForm({
   insuranceType = 'auto',
   submit = submitInsuranceIntake,
-  createKey = () => crypto.randomUUID(),
+  createKey = defaultCreateKey,
 }) {
   const [state, setState] = useState({ status: 'idle' });
-  const controller = useMemo(() => createIntakeController({
-    submit,
-    createKey,
-    onStateChange: setState,
-  }), [submit, createKey]);
+  const controllerRef = useRef(null);
+  if (!controllerRef.current) {
+    controllerRef.current = createIntakeController({ submit, createKey, onStateChange: setState });
+  }
+  const controller = controllerRef.current;
 
   async function handleSubmit(event) {
     event.preventDefault();
