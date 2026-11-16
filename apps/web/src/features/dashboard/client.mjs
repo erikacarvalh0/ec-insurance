@@ -18,7 +18,9 @@ export async function fetchBrokerLeads({ token, limit, offset, fetcher = fetch }
   });
 
   if (!response.ok) {
-    throw new Error('Unable to load leads');
+    const error = new Error('Unable to load leads');
+    error.status = response.status;
+    throw error;
   }
 
   const result = await response.json();

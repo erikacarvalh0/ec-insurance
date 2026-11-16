@@ -5,7 +5,7 @@ import { nextLeadOffset, previousLeadOffset } from './pagination.mjs';
 
 const PAGE_SIZE = 20;
 
-export function BrokerDashboard({ token, fetchLeads = fetchBrokerLeads }) {
+export function BrokerDashboard({ token, fetchLeads = fetchBrokerLeads, onSessionExpired }) {
   const [state, setState] = useState({ status: 'idle', leads: [] });
   const [statusFilter, setStatusFilter] = useState('all');
   const [offset, setOffset] = useState(0);
@@ -20,10 +20,14 @@ export function BrokerDashboard({ token, fetchLeads = fetchBrokerLeads }) {
     setState({ status: 'loading', leads: [] });
     fetchLeads({ token, limit: PAGE_SIZE, offset }).then(
       (leads) => { if (active) setState({ status: 'success', leads }); },
-      () => { if (active) setState({ status: 'error', leads: [] }); },
+      (error) => {
+        if (!active) return;
+        setState({ status: 'error', leads: [] });
+        if (error?.status === 401) onSessionExpired?.();
+      },
     );
     return () => { active = false; };
-  }, [token, fetchLeads, offset]);
+  }, [token, fetchLeads, offset, onSessionExpired]);
 
   return h('main', null,
     h('h1', null, 'Broker dashboard'),

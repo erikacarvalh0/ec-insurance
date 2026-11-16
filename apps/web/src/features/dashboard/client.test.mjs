@@ -32,3 +32,18 @@ test('does not expose backend response body on failed requests', async () => {
     fetcher: async () => ({ ok: false, status: 500, json: async () => ({ error: 'db secret' }) }),
   }), /Unable to load leads/);
 });
+
+test('reports an invalid server session without reading the response body', async () => {
+  await assert.rejects(fetchBrokerLeads({
+    token: 'revoked-token',
+    fetcher: async () => ({ ok: false, status: 401 }),
+  }), (error) => error.status === 401 && error.message === 'Unable to load leads');
+});
+
+test('preserves other failures without identifying them as expired sessions', async () => {
+  for (const status of [403, 500]) {
+    await assert.rejects(fetchBrokerLeads({
+      token: 'valid', fetcher: async () => ({ ok: false, status }),
+    }), (error) => error.status === status);
+  }
+});
