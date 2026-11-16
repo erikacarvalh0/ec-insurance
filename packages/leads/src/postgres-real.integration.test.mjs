@@ -31,3 +31,23 @@ test('real PostgreSQL rolls back a failed status and audit transaction',options,
   assert.equal(await prisma.leadStatusHistory.count({where:{leadId:id}}),0);
  }finally{await prisma.leadStatusHistory.deleteMany({where:{leadId:id}});await prisma.lead.deleteMany({where:{id}});await prisma.$disconnect();}
 });
+
+
+test('real PostgreSQL isolates broker and manager lead listings by ownership and team',options,async()=>{
+ const {PrismaClient}=await import('@prisma/client');
+ const {createPrismaLeadListRepository}=await import('./list-repository.mjs');
+ const prisma=new PrismaClient({datasources:{db:{url:process.env.TEST_DATABASE_URL}}});
+ const ownerA=randomUUID(),ownerB=randomUUID(),teamA=randomUUID(),teamB=randomUUID();
+ const ids=[randomUUID(),randomUUID()];
+ try{
+  for(const [index,ownerId,teamId] of [[0,ownerA,teamA],[1,ownerB,teamB]]){
+   await prisma.lead.create({data:{id:ids[index],insuranceType:'AUTO',contactName:'Scope Test',contactEmail:'scope@example.invalid',contactPhone:'000',idempotencyKey:randomUUID(),ownerId,teamId}});
+  }
+  const repo=createPrismaLeadListRepository(prisma);
+  const broker=await repo.list({role:'broker',userId:ownerA});
+  assert.ok(broker.some(x=>x.id===ids[0]));assert.ok(!broker.some(x=>x.id===ids[1]));
+  const manager=await repo.list({role:'manager',userId:randomUUID(),teamId:teamB});
+  assert.ok(manager.some(x=>x.id===ids[1]));assert.ok(!manager.some(x=>x.id===ids[0]));
+  await assert.rejects(repo.list({role:'manager',userId:randomUUID()}),/Forbidden/);
+ }finally{await prisma.lead.deleteMany({where:{id:{in:ids}}});await prisma.$disconnect();}
+});
