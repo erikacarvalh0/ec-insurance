@@ -37,6 +37,20 @@ test('session tokens preserve a valid optional team claim', () => {
   assert.deepEqual(tokens.verify(tokens.issue(actor)), actor);
 });
 
+test('issuing session tokens rejects invalid timestamp claims', () => {
+  for (const current of [NaN, Infinity, -Infinity, Number.MAX_SAFE_INTEGER * 1000]) {
+    const tokens = createSessionTokenService({ secret: 'c'.repeat(32), now: () => current });
+    assert.throws(() => tokens.issue({ userId: 'broker-1', role: 'broker' }), TypeError);
+  }
+});
+
+test('issuing session tokens rejects expiry beyond the safe integer range', () => {
+  const tokens = createSessionTokenService({
+    secret: 'c'.repeat(32), now: () => 100_000, ttlSeconds: Number.MAX_SAFE_INTEGER,
+  });
+  assert.throws(() => tokens.issue({ userId: 'broker-1', role: 'broker' }), TypeError);
+});
+
 test('issuing session tokens rejects malformed team claims', () => {
   const tokens = createSessionTokenService({ secret: 'c'.repeat(32) });
   for (const teamId of [null, '', 42, false, [], {}]) {
