@@ -18,6 +18,9 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Install dependencies
+        run: npm install --no-package-lock --ignore-scripts
+
       - name: Run domain tests
         run: |
           find packages apps -name '*.test.mjs' -print0 2>/dev/null | xargs -0 -r -n 1 node --test
