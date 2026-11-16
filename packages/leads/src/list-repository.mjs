@@ -1,3 +1,4 @@
+// Scope lead queries by the authenticated actor; never expose contact details.
 export function createPrismaLeadListRepository(prisma) {
   if (typeof prisma?.lead?.findMany !== 'function') {
     throw new TypeError('Prisma lead.findMany is required');
