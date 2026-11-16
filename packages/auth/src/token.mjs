@@ -21,10 +21,14 @@ export function createSessionTokenService({ secret, now = Date.now, ttlSeconds =
         throw new TypeError('Session teamId must be a non-empty string');
       }
       const issuedAt = Math.floor(now() / 1000);
+      const expiresAt = issuedAt + ttlSeconds;
+      if (!Number.isSafeInteger(issuedAt) || !Number.isSafeInteger(expiresAt)) {
+        throw new TypeError('Session timestamps must be safe integers');
+      }
       const payload = Buffer.from(JSON.stringify({
         sub: actor.userId, role: actor.role,
         ...(actor.teamId ? { teamId: actor.teamId } : {}),
-        iat: issuedAt, exp: issuedAt + ttlSeconds,
+        iat: issuedAt, exp: expiresAt,
       })).toString('base64url');
       return `${payload}.${sign(payload)}`;
     },
