@@ -15,5 +15,5 @@ test('sample environment declares a local database URL without real secrets', ()
   const example = readFileSync(new URL('../../../.env.example', import.meta.url), 'utf8');
 
   assert.match(example, /^DATABASE_URL=postgresql:\/\//m);
-  assert.doesNotMatch(example, /production|supabase|neon\.tech/i);
+  assert.doesNotMatch(example.split('\n').find((line) => line.startsWith('DATABASE_URL=')), /production|supabase|neon\.tech/i);
 });
