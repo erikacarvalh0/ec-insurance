@@ -1,0 +1,8 @@
+import { createElement } from 'react';
+import { createRoot } from 'react-dom/client';
+
+import { App } from './App.mjs';
+
+const root = document.getElementById('root');
+if (!root) throw new Error('Missing React mount element');
+createRoot(root).render(createElement(App));
