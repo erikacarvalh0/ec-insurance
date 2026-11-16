@@ -15,7 +15,7 @@ test('does not overwrite a recovered job after a stale delivery completes',async
  let status='PENDING',claims=0;const job={id:'j1',subject:'Hello',body:'Message',idempotencyKey:'k',attempts:0};
  const prisma={notificationJob:{findFirst:async()=>job,updateMany:async({where,data})=>{
   if(where.status==='PENDING'){status='PROCESSING';claims++;return{count:1};}
-  if(where.status==='PROCESSING'){assert.equal(where.leaseExpiresAt.gt.toISOString(),'2026-11-16T20:00:00.000Z');status='PENDING';return{count:0};}
+  if(where.status==='PROCESSING'){assert.equal(where.leaseExpiresAt.toISOString(),'2026-11-16T20:01:00.000Z');status='PENDING';return{count:0};}
   return{count:0};
  },update:async()=>{throw Error('unsafe unconditional update');}}};
  const worker=createNotificationWorker({prisma,adapter:{send:async()=>{}},now:()=>new Date('2026-11-16T20:00:00Z')});
