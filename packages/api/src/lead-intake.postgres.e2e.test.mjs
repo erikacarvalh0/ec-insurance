@@ -19,7 +19,7 @@ test('real HTTP intake persists lead once and rejects duplicate idempotency keys
   const first=await fetch(url,request);assert.equal(first.status,201);
   const result=await first.json();assert.equal(result.lead.insuranceType,'auto');
   assert.equal(await prisma.lead.count({where:{idempotencyKey:key}}),1);
-  const duplicate=await fetch(url,request);assert.equal(duplicate.status,500);
+  const duplicate=await fetch(url,request);assert.equal(duplicate.status,409);
   assert.equal(await prisma.lead.count({where:{idempotencyKey:key}}),1);
  }finally{
   if(runtime.server.listening)await new Promise(resolve=>runtime.server.close(resolve));
