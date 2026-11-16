@@ -51,3 +51,13 @@ test('counts UTF-8 bytes instead of characters toward the request limit', async 
 test('rejects non-object JSON payloads', async () => {
   await assert.rejects(parseJsonBody(Readable.from(['[]'])), TypeError);
 });
+
+test('accepts a three-byte UTF-8 code point split across chunks at the exact limit', async () => {
+  const payload = Buffer.from('{"value":"€"}');
+  const split = payload.indexOf(Buffer.from('€')) + 1;
+  const body = await parseJsonBody(
+    Readable.from([payload.subarray(0, split), payload.subarray(split)]),
+    { maxBytes: payload.byteLength },
+  );
+  assert.deepEqual(body, { value: '€' });
+});
