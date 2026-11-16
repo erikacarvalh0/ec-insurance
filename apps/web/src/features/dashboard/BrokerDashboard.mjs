@@ -1,8 +1,10 @@
 import { createElement as h, useEffect, useState } from 'react';
 import { fetchBrokerLeads } from './client.mjs';
+import { filterBrokerLeads } from './lead-filter.mjs';
 
 export function BrokerDashboard({ token, fetchLeads = fetchBrokerLeads }) {
   const [state, setState] = useState({ status: 'idle', leads: [] });
+  const [statusFilter, setStatusFilter] = useState('all');
 
   useEffect(() => {
     if (!token) {
@@ -25,8 +27,11 @@ export function BrokerDashboard({ token, fetchLeads = fetchBrokerLeads }) {
       state.status === 'loading' || state.status === 'idle' ? h('p', { role: 'status' }, 'Loading leads...') :
       state.status === 'error' ? h('p', { role: 'alert' }, 'Unable to load leads') :
       h('section', { 'aria-label': 'Assigned leads' },
-        h('p', null, `Leads: ${state.leads.length}`),
-        h('ul', null, ...state.leads.map((lead) =>
+        h('label', { htmlFor: 'broker-lead-status' }, 'Filter by status'),
+        h('select', { id: 'broker-lead-status', value: statusFilter, onChange: (event) => setStatusFilter(event.target.value) },
+          ...['all', 'received', 'contacted', 'qualified', 'converted', 'closed'].map((status) => h('option', { key: status, value: status }, status))),
+        h('p', null, `Leads: ${filterBrokerLeads(state.leads, statusFilter).length}`),
+        h('ul', null, ...filterBrokerLeads(state.leads, statusFilter).map((lead) =>
           h('li', { key: lead.id }, `${lead.insuranceType ?? 'Insurance'} — ${lead.status ?? 'received'}`),
         )),
       ),
