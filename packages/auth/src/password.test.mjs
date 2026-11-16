@@ -28,3 +28,12 @@ test('password hashing and verification enforce the same UTF-8 byte limit', asyn
   const oversizedHash = `scrypt:v1:${salt.toString('base64url')}:${key.toString('base64url')}`;
   assert.equal(await verifyPassword(oversized, oversizedHash), false);
 });
+
+test('accepts exactly 1024 UTF-8 bytes in mixed ASCII and emoji passwords', async () => {
+  const password = 'a'.repeat(1020) + '😀';
+  const hash = await hashPassword(password);
+  assert.equal(await verifyPassword(password, hash), true);
+  const oversized = password + 'a';
+  await assert.rejects(hashPassword(oversized), /password/i);
+  assert.equal(await verifyPassword(oversized, hash), false);
+});
