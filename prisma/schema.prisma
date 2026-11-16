@@ -1,0 +1,57 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum InsuranceType {
+  AUTO
+  RESIDENTIAL
+  LIFE
+  HEALTH
+  BUSINESS
+  TRAVEL
+}
+
+enum LeadStatus {
+  RECEIVED
+  PROCESSING
+  QUOTED
+  MANUAL_REVIEW
+  CONTACTED
+  COMPLETED
+  CANCELLED
+}
+
+model Lead {
+  id             String        @id @default(uuid())
+  insuranceType  InsuranceType
+  status         LeadStatus    @default(RECEIVED)
+  contactName    String
+  contactEmail   String
+  contactPhone   String
+  idempotencyKey String        @unique
+  ownerId        String?
+  teamId         String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  quotations     Quotation[]
+
+  @@index([status, createdAt])
+  @@index([teamId, ownerId])
+}
+
+model Quotation {
+  id         String   @id @default(uuid())
+  leadId     String
+  lead       Lead     @relation(fields: [leadId], references: [id])
+  provider   String
+  status     String
+  simulated  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@index([leadId, createdAt])
+}
