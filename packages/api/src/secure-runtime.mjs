@@ -1,5 +1,6 @@
 import { createPrismaLeadRepository } from '../../leads/src/repository.mjs';
 import { createPrismaLeadListRepository } from '../../leads/src/list-repository.mjs';
+import { createPrismaLeadDetailRepository } from '../../leads/src/detail-repository.mjs';
 import { checkDatabaseConnection } from '../../leads/src/database.mjs';
 import { createSecureApiServer } from './secure-server.mjs';
 
@@ -11,6 +12,7 @@ export function createPrismaSecureRuntime({ prisma, verifyToken, login, loginLim
   const server = createSecureApiServer({
     leadRepository: createPrismaLeadRepository(prisma),
     leadListRepository: createPrismaLeadListRepository(prisma),
+    leadDetailRepository: createPrismaLeadDetailRepository(prisma),
     checkDatabase: () => checkDatabaseConnection(prisma),
     verifyToken,
     login,
