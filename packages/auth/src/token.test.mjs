@@ -19,6 +19,18 @@ test('expired sessions and weak signing keys are rejected', () => {
   assert.equal(tokens.verify(token), null);
 });
 
+test('session verification rejects tokens when the clock cannot validate time claims', () => {
+  let current = 100_000;
+  const tokens = createSessionTokenService({ secret: 'b'.repeat(32), now: () => current, ttlSeconds: 60 });
+  const token = tokens.issue({ userId: 'broker-1', role: 'broker' });
+  assert.deepEqual(tokens.verify(token), { userId: 'broker-1', role: 'broker' });
+
+  for (const invalidTime of [NaN, Infinity, -Infinity, undefined, Number.MAX_VALUE]) {
+    current = invalidTime;
+    assert.equal(tokens.verify(token), null);
+  }
+});
+
 test('session tokens preserve a valid optional team claim', () => {
   const tokens = createSessionTokenService({ secret: 'c'.repeat(32) });
   const actor = { userId: 'broker-1', role: 'broker', teamId: 'team-1' };
