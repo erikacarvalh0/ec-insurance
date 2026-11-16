@@ -22,3 +22,11 @@ test('HTTP handler accepts safe id prefix and rejects wildcard or repeated searc
  assert.equal((await handler(request('/api/leads?search=%25'))).status,400);
  assert.equal((await handler(request('/api/leads?search=a&search=b'))).status,400);
 });
+
+test('rejects repeated status, type and pagination query parameters',async()=>{
+ const handler=createProtectedLeadsHandler({verifyToken:()=>({role:'admin',userId:'admin-1'}),leadListRepository:{list:async()=>{throw Error('must not query');}}});
+ for(const url of ['/api/leads?status=received&status=quoted','/api/leads?insuranceType=auto&insuranceType=life','/api/leads?limit=10&limit=100','/api/leads?offset=0&offset=1']){
+  const response=await handler({method:'GET',url,headers:{authorization:'Bearer valid'}});
+  assert.equal(response.status,400,url);
+ }
+});
