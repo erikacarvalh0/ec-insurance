@@ -14,7 +14,7 @@ export async function hashPassword(password) {
 }
 
 export async function verifyPassword(password, encoded) {
-  if (typeof password !== 'string' || typeof encoded !== 'string' || password.length > 1024) return false;
+  if (typeof password !== 'string' || typeof encoded !== 'string' || Buffer.byteLength(password) > 1024) return false;
   const parts = encoded.split(':');
   if (parts.length !== 4 || parts[0] !== 'scrypt' || parts[1] !== 'v1') return false;
   try {
