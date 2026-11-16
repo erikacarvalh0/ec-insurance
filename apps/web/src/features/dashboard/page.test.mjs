@@ -10,7 +10,7 @@ test('renders semantic dashboard page with totals and lead table', () => {
   });
 
   assert.match(html, /<main/);
-  assert.match(html, /<h1>Insurance dashboard<\/h1>/);
+  assert.match(html, /<h1[^>]*>Insurance dashboard<\/h1>/);
   assert.match(html, /Total leads: 2/);
   assert.match(html, /<table/);
 });
