@@ -112,8 +112,10 @@ model NotificationJob {
  status String @default("PENDING")
  attempts Int @default(0)
  nextAttemptAt DateTime @default(now())
+ leaseExpiresAt DateTime?
  createdAt DateTime @default(now())
  updatedAt DateTime @updatedAt
 
  @@index([status, nextAttemptAt])
+ @@index([status, leaseExpiresAt])
 }
