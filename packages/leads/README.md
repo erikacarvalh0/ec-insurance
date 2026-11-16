@@ -12,16 +12,17 @@ Own lead intake, assignment, deduplication and lifecycle.
 
 Use transport-agnostic domain types and no real personal data in fixtures.
 
-## Atualização de status
+## Persisted status history API
 
-`PATCH /api/leads/:id/status` recebe JSON `{ "status": "contacted" }` e exige
-um token Bearer válido. Corretores alteram seus próprios leads, gerentes os de
-sua equipe e administradores qualquer lead. O ator do histórico vem do token.
+`GET /api/leads/:id/status-history?limit=20&offset=0` requires a Bearer
+session token. Brokers can read their own leads, managers their team's leads,
+and admins all leads. Missing or inaccessible leads return 404; invalid actor
+roles return 403 and missing or invalid tokens return 401.
 
-A API retorna `200` com `{ "lead": { "id": "...", "status": "contacted" } }`,
-`400` para payload inválido, `401` sem autenticação, `403` para papel não
-permitido e `404` para lead inexistente ou fora do escopo. Transições inválidas
-(incluindo repetir o status) e alterações concorrentes retornam `409`.
-Status e histórico são gravados na mesma transação Prisma; falha no histórico
-desfaz a atualização. O cliente deve recarregar o lead antes de tentar novamente
-após um conflito.
+The response is `{ "history": [...] }`. Each entry contains `id`, `leadId`,
+`actorId`, `fromStatus`, `toStatus` and `createdAt` (an ISO 8601 timestamp).
+Statuses use lowercase values. Entries are ordered newest first, with ID as a
+stable tiebreaker. Pagination follows the leads list: `limit` defaults to 100
+(1–100), and `offset` defaults to 0 (0–100000). Invalid pagination returns 400.
+An empty page returns 200 with an empty array. Responses use `Cache-Control:
+no-store`.
