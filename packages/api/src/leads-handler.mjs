@@ -8,7 +8,7 @@ export function createProtectedLeadsHandler({ verifyToken, leadListRepository })
       return { status: 405, headers: { Allow: 'GET' }, body: { error: 'Method not allowed' } };
     }
 
-    const authorization = request?.headers?.authorization;
+    const authorization = request?.headers?.authorization ?? request?.headers?.Authorization;
     const match = typeof authorization === 'string' && /^Bearer ([A-Za-z0-9._~-]+)$/.exec(authorization);
     if (!match) return { status: 401, body: { error: 'Unauthorized' } };
 
