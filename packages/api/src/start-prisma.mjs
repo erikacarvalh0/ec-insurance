@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { createPrismaSecureRuntime } from './secure-runtime.mjs';
 import { createSessionTokenService } from '../../auth/src/token.mjs';
 import { createPrismaLogin } from './prisma-login-runtime.mjs';
+import { createLoginRateLimiter } from '../../auth/src/rate-limit.mjs';
 
 if (!process.env.DATABASE_URL) {
   throw new Error('DATABASE_URL is required');
@@ -20,7 +21,7 @@ if (!process.env.SESSION_SECRET) {
 const sessionTokens = createSessionTokenService({ secret: process.env.SESSION_SECRET });
 const prisma = new PrismaClient();
 const login = createPrismaLogin({ prisma, issueToken: sessionTokens.issue });
-const runtime = createPrismaSecureRuntime({ prisma, verifyToken: sessionTokens.verify, login });
+const runtime = createPrismaSecureRuntime({ prisma, verifyToken: sessionTokens.verify, login, loginLimiter: createLoginRateLimiter() });
 
 const host = process.env.HOST ?? '127.0.0.1';
 runtime.server.listen(port, host, () => {
