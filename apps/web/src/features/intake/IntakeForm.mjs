@@ -22,12 +22,12 @@ function field(name, label, type = 'text') {
   );
 }
 
-export function IntakeForm({ insuranceType = 'auto' }) {
+export function IntakeForm({ insuranceType = 'auto', onSubmit }) {
   const selectedType = Object.hasOwn(FIELD_GROUPS, insuranceType) ? insuranceType : 'auto';
 
   return h('section', { 'aria-labelledby': 'intake-title' },
     h('h1', { id: 'intake-title' }, 'Request insurance quotation'),
-    h('form', { method: 'post', action: '/api/intake' },
+    h('form', { method: 'post', action: '/api/intake', onSubmit },
       h('input', { type: 'hidden', name: 'insuranceType', value: selectedType }),
       field('name', 'Full name'),
       field('email', 'Email address', 'email'),
