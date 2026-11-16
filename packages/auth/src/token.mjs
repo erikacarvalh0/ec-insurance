@@ -17,6 +17,9 @@ export function createSessionTokenService({ secret, now = Date.now, ttlSeconds =
       if (typeof actor?.userId !== 'string' || !actor.userId || !ROLES.has(actor.role)) {
         throw new TypeError('A valid session actor is required');
       }
+      if (actor.teamId !== undefined && (typeof actor.teamId !== 'string' || !actor.teamId)) {
+        throw new TypeError('Session teamId must be a non-empty string');
+      }
       const issuedAt = Math.floor(now() / 1000);
       const payload = Buffer.from(JSON.stringify({
         sub: actor.userId, role: actor.role,
@@ -40,6 +43,7 @@ export function createSessionTokenService({ secret, now = Date.now, ttlSeconds =
         if (!Number.isSafeInteger(data.iat) || !Number.isSafeInteger(data.exp) ||
             data.iat > current || data.exp <= current ||
             typeof data.sub !== 'string' || !data.sub || !ROLES.has(data.role)) return null;
+        if (data.teamId !== undefined && (typeof data.teamId !== 'string' || !data.teamId)) return null;
         return { userId: data.sub, role: data.role, ...(data.teamId ? { teamId: data.teamId } : {}) };
       } catch {
         return null;
