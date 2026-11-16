@@ -4,12 +4,13 @@ import { Navigation } from './Navigation.mjs';
 import { BrokerDashboard } from './features/dashboard/BrokerDashboard.mjs';
 import { LoginForm } from './features/auth/LoginForm.mjs';
 import { loginBroker } from './features/auth/client.mjs';
+import { isSessionTokenActive } from './features/auth/session.mjs';
 
 const TYPES = ['auto', 'residential', 'life', 'health', 'business', 'travel'];
 
 export function App({ pathname = typeof window === 'undefined' ? '/' : window.location.pathname, token }) {
   const [insuranceType, setInsuranceType] = useState('auto');
-  const [sessionToken, setSessionToken] = useState(token ?? null);
+  const [sessionToken, setSessionToken] = useState(token && isSessionTokenActive(token) ? token : null);
   const [loginError, setLoginError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -18,6 +19,7 @@ export function App({ pathname = typeof window === 'undefined' ? '/' : window.lo
     setLoginError('');
     try {
       const session = await loginBroker(credentials);
+      if (!isSessionTokenActive(session.token)) throw new Error('Invalid session');
       setSessionToken(session.token);
     } catch {
       setLoginError('Unable to sign in');
