@@ -9,7 +9,7 @@ export function createPrismaLeadAssignmentRepository(prisma) {
     const lead=await tx.lead.findFirst({where,select:{ownerId:true,teamId:true}});
     if(!lead)return null;
     if(!lead.teamId)throw new Error('Unassigned team');
-    const user=await prisma.user.findFirst({where:{id:assigneeId,teamId:lead.teamId,role:'BROKER',active:true},select:{id:true}});
+    const user=await tx.user.findFirst({where:{id:assigneeId,teamId:lead.teamId,role:'BROKER',active:true},select:{id:true}});
     if(!user)throw new Error('Invalid assignee');
     if(lead.ownerId===assigneeId)throw new Error('Already assigned');
     const result=await tx.lead.updateMany({where:{...where,ownerId:lead.ownerId},data:{ownerId:assigneeId}});
