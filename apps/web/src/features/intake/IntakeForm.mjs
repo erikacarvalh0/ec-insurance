@@ -1,6 +1,13 @@
 import { createElement as h } from 'react';
 
-const TYPES = new Set(['auto', 'residential', 'life', 'health', 'business', 'travel']);
+const FIELD_GROUPS = {
+  auto: [['vehicleModel', 'Vehicle model'], ['vehicleYear', 'Vehicle year', 'number']],
+  residential: [['postalCode', 'Postal code']],
+  life: [['birthDate', 'Date of birth', 'date'], ['coverageAmount', 'Coverage amount', 'number']],
+  health: [['beneficiaries', 'Beneficiaries', 'number'], ['city', 'City']],
+  business: [['companyRegistration', 'Company registration'], ['businessActivity', 'Business activity']],
+  travel: [['destination', 'Destination'], ['departureDate', 'Departure date', 'date'], ['returnDate', 'Return date', 'date']],
+};
 
 function field(name, label, type = 'text') {
   return h('div', { key: name },
@@ -16,7 +23,7 @@ function field(name, label, type = 'text') {
 }
 
 export function IntakeForm({ insuranceType = 'auto' }) {
-  const selectedType = TYPES.has(insuranceType) ? insuranceType : 'auto';
+  const selectedType = Object.hasOwn(FIELD_GROUPS, insuranceType) ? insuranceType : 'auto';
 
   return h('section', { 'aria-labelledby': 'intake-title' },
     h('h1', { id: 'intake-title' }, 'Request insurance quotation'),
@@ -25,6 +32,10 @@ export function IntakeForm({ insuranceType = 'auto' }) {
       field('name', 'Full name'),
       field('email', 'Email address', 'email'),
       field('phone', 'Phone number', 'tel'),
+      h('fieldset', null,
+        h('legend', null, 'Insurance details'),
+        ...FIELD_GROUPS[selectedType].map(([name, label, type]) => field(name, label, type)),
+      ),
       h('button', { type: 'submit' }, 'Request quotation'),
     ),
   );
