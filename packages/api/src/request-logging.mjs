@@ -12,6 +12,8 @@ export function attachRequestCorrelation(request, response, { log = createReques
   const id = randomUUID();
   const start = now();
   response.setHeader('X-Request-ID', id);
-  response.once('finish', () => log({ id, method: request.method, url: request.url, status: response.statusCode, durationMs: Math.max(0, now() - start) }));
+  if (typeof response.once === 'function') {
+    response.once('finish', () => log({ id, method: request.method, url: request.url, status: response.statusCode, durationMs: Math.max(0, now() - start) }));
+  }
   return id;
 }
