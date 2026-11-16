@@ -1,3 +1,6 @@
+const STATUS_FILTERS = new Set(['received','processing','quoted','manual_review','contacted','completed','cancelled']);
+const TYPE_FILTERS = new Set(['auto','residential','life','health','business','travel']);
+
 export function createProtectedLeadsHandler({ verifyToken, leadListRepository }) {
   if (typeof verifyToken !== 'function' || typeof leadListRepository?.list !== 'function') {
     throw new TypeError('Session verifier and lead repository are required');
@@ -28,7 +31,10 @@ export function createProtectedLeadsHandler({ verifyToken, leadListRepository })
       if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100 || !Number.isSafeInteger(offset) || offset < 0 || offset > 100_000) {
         return { status: 400, body: { error: 'Invalid pagination' } };
       }
-      pagination = { limit, offset };
+      const status = query.get('status') ?? undefined;
+      const insuranceType = query.get('insuranceType') ?? undefined;
+      if ((status !== undefined && !STATUS_FILTERS.has(status)) || (insuranceType !== undefined && !TYPE_FILTERS.has(insuranceType))) return { status: 400, body: { error: 'Invalid filters' } };
+      pagination = { limit, offset, ...(status ? { status } : {}), ...(insuranceType ? { insuranceType } : {}) };
     } catch {
       return { status: 400, body: { error: 'Invalid pagination' } };
     }
