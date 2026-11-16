@@ -21,3 +21,15 @@ test('does not overwrite a recovered job after a stale delivery completes',async
  const worker=createNotificationWorker({prisma,adapter:{send:async()=>{}},now:()=>new Date('2026-11-16T20:00:00Z')});
  assert.equal((await worker.processOne()).status,'stale');assert.equal(status,'PENDING');assert.equal(claims,1);
 });
+
+test('does not mark a delivered notification sent after its lease expires',async()=>{
+ const job={id:'j1',subject:'Hello',body:'Message',idempotencyKey:'k',attempts:0};
+ let status='PENDING',clock=new Date('2026-11-16T20:00:00Z');
+ const prisma={notificationJob:{findFirst:async()=>job,updateMany:async({where,data})=>{
+  if(where.status==='PENDING'){status='PROCESSING';return{count:1};}
+  assert.equal(where.AND[1].leaseExpiresAt.gt.toISOString(),'2026-11-16T20:02:00.000Z');
+  return{count:0};
+ }}};
+ const worker=createNotificationWorker({prisma,now:()=>clock,adapter:{send:async()=>{clock=new Date('2026-11-16T20:02:00Z');}}});
+ assert.equal((await worker.processOne()).status,'stale');assert.equal(status,'PROCESSING');
+});
