@@ -8,7 +8,7 @@ test('login form exposes labeled email and password fields', () => {
   const html = renderToStaticMarkup(createElement(LoginForm, { onSubmit: () => {} }));
   assert.match(html, /type="email"/);
   assert.match(html, /type="password"/);
-  assert.match(html, /autocomplete="current-password"/);
+  assert.match(html, /autoComplete="current-password"/);
   assert.match(html, /Sign in/);
 });
 
