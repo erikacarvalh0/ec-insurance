@@ -40,7 +40,8 @@ export function createSessionTokenService({ secret, now = Date.now, ttlSeconds =
       try {
         const data = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
         const current = Math.floor(now() / 1000);
-        if (!Number.isSafeInteger(data.iat) || !Number.isSafeInteger(data.exp) ||
+        if (!Number.isSafeInteger(current) ||
+            !Number.isSafeInteger(data.iat) || !Number.isSafeInteger(data.exp) ||
             data.iat > current || data.exp <= current ||
             typeof data.sub !== 'string' || !data.sub || !ROLES.has(data.role)) return null;
         if (data.teamId !== undefined && (typeof data.teamId !== 'string' || !data.teamId)) return null;
