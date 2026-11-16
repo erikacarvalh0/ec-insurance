@@ -3,7 +3,7 @@ import { createPrismaLeadListRepository } from '../../leads/src/list-repository.
 import { checkDatabaseConnection } from '../../leads/src/database.mjs';
 import { createSecureApiServer } from './secure-server.mjs';
 
-export function createPrismaSecureRuntime({ prisma, verifyToken }) {
+export function createPrismaSecureRuntime({ prisma, verifyToken, login }) {
   if (typeof prisma?.$disconnect !== 'function') {
     throw new TypeError('Prisma client must support disconnection');
   }
@@ -13,6 +13,7 @@ export function createPrismaSecureRuntime({ prisma, verifyToken }) {
     leadListRepository: createPrismaLeadListRepository(prisma),
     checkDatabase: () => checkDatabaseConnection(prisma),
     verifyToken,
+    login,
   });
 
   return {
