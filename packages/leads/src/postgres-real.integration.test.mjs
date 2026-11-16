@@ -23,8 +23,9 @@ test('real PostgreSQL rolls back a failed status and audit transaction',options,
  const id=randomUUID();const ownerId=randomUUID();
  try{
   await prisma.lead.create({data:{id,insuranceType:'AUTO',contactName:'Rollback Test',contactEmail:'test@example.invalid',contactPhone:'000',idempotencyKey:randomUUID(),ownerId}});
-  const repo=createPrismaLeadStatusRepository(prisma);
-  await assert.rejects(repo.updateStatus({role:'broker',userId:ownerId},id,'contacted'),/./);
+  const failHistory={ $transaction:(run)=>prisma.$transaction((tx)=>run({...tx,leadStatusHistory:{create:async()=>{throw new Error('Simulated audit write failure');}}})) };
+  const repo=createPrismaLeadStatusRepository(failHistory);
+  await assert.rejects(repo.updateStatus({role:'broker',userId:ownerId},id,'contacted'),/Simulated audit write failure/);
   const lead=await prisma.lead.findUnique({where:{id}});
   assert.equal(lead.status,'RECEIVED');
   assert.equal(await prisma.leadStatusHistory.count({where:{leadId:id}}),0);
