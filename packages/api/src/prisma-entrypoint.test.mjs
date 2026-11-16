@@ -5,7 +5,7 @@ import test from 'node:test';
 test('Prisma entrypoint instantiates generated Prisma client and starts persistent runtime', () => {
   const source = readFileSync(new URL('./start-prisma.mjs', import.meta.url), 'utf8');
   assert.match(source, /PrismaClient/);
-  assert.match(source, /createPrismaApiRuntime/);
+  assert.match(source, /createPrismaSecureRuntime/);
   assert.match(source, /DATABASE_URL/);
 });
 
