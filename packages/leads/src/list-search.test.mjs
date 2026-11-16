@@ -30,3 +30,11 @@ test('rejects repeated status, type and pagination query parameters',async()=>{
   assert.equal(response.status,400,url);
  }
 });
+
+test('HTTP listing rejects unknown query keys before database access',async()=>{
+ const handler=createProtectedLeadsHandler({verifyToken:()=>({role:'admin',userId:'admin-1'}),leadListRepository:{list:async()=>{throw Error('unexpected query');}}});
+ for(const url of ['/api/leads?ownerId=another-user','/api/leads?teamId=other-team','/api/leads?status=received&debug=1']){
+  const response=await handler({method:'GET',url,headers:{authorization:'Bearer valid'}});
+  assert.equal(response.status,400,url);
+ }
+});

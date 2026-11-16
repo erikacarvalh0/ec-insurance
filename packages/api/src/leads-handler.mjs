@@ -26,6 +26,7 @@ export function createProtectedLeadsHandler({ verifyToken, leadListRepository })
     let pagination;
     try {
       const query = new URL(request.url ?? '/api/leads', 'http://localhost').searchParams;
+      if ([...query.keys()].some(key => !['search','status','insuranceType','limit','offset'].includes(key))) return { status: 400, body: { error: 'Unknown query parameter' } };
       const limit = query.has('limit') ? Number(query.get('limit')) : 100;
       const offset = query.has('offset') ? Number(query.get('offset')) : 0;
       if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100 || !Number.isSafeInteger(offset) || offset < 0 || offset > 100_000) {
