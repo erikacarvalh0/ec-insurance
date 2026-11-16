@@ -8,7 +8,7 @@ export function createPrismaLeadListRepository(prisma) {
   }
 
   return {
-    async list(actor, { limit = 100, offset = 0, status, insuranceType } = {}) {
+    async list(actor, { limit = 100, offset = 0, status, insuranceType, search } = {}) {
       if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100 || !Number.isSafeInteger(offset) || offset < 0 || offset > 100_000) {
         throw new RangeError('Invalid pagination');
       }
@@ -25,7 +25,8 @@ export function createPrismaLeadListRepository(prisma) {
       }
 
       if ((status !== undefined && !STATUS_FILTERS.has(status)) || (insuranceType !== undefined && !TYPE_FILTERS.has(insuranceType))) throw new TypeError('Invalid filters');
-      where = { ...where, ...(status ? { status: status.toUpperCase() } : {}), ...(insuranceType ? { insuranceType: insuranceType.toUpperCase() } : {}) };
+      if (search !== undefined && (typeof search !== 'string' || !/^[A-Za-z0-9_-]{2,64}$/.test(search))) throw new TypeError('Invalid search');
+      where = { ...where, ...(status ? { status: status.toUpperCase() } : {}), ...(insuranceType ? { insuranceType: insuranceType.toUpperCase() } : {}), ...(search ? { id: { startsWith: search } } : {}) };
 
       const records = await prisma.lead.findMany({
         where,
