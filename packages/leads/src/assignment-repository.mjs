@@ -1,5 +1,5 @@
 export function createPrismaLeadAssignmentRepository(prisma) {
- if(typeof prisma?.$transaction!=='function'||typeof prisma?.user?.findFirst!=='function')throw new TypeError('Prisma transaction and user lookup required');
+ if(typeof prisma?.$transaction!=='function')throw new TypeError('Prisma transaction required');
  return{
   async assign(actor,id,assigneeId){
    if(!actor?.userId||!['manager','admin'].includes(actor.role)||(actor.role==='manager'&&!actor.teamId))throw new Error('Forbidden');
