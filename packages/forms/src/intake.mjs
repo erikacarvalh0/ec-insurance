@@ -24,11 +24,11 @@ export function validateInsuranceIntake(input) {
     errors.push('contact.name');
   }
 
-  if (typeof contact.email !== 'string' || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(contact.email)) {
+  if (typeof contact.email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) {
     errors.push('contact.email');
   }
 
-  if (typeof contact.phone !== 'string' || !/^\\d{10,13}$/.test(contact.phone)) {
+  if (typeof contact.phone !== 'string' || !/^\d{10,13}$/.test(contact.phone)) {
     errors.push('contact.phone');
   }
 
