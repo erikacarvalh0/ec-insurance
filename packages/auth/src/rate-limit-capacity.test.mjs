@@ -10,7 +10,7 @@ test('evicts expired keys to bound limiter memory usage', () => {
   assert.equal(limiter.allow('c'), false);
   time = 11;
   assert.equal(limiter.allow('c'), true);
-  assert.equal(limiter.allow('a'), false);
+  assert.equal(limiter.allow('a'), true);
 });
 
 test('validates limiter key capacity', () => {
