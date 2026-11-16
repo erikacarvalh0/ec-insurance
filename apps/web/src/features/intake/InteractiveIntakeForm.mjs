@@ -28,7 +28,7 @@ export function InteractiveIntakeForm({
   }
 
   return h('div', null,
-    h('div', { onSubmit: handleSubmit }, h(IntakeForm, { insuranceType })),
+    h(IntakeForm, { insuranceType, onSubmit: handleSubmit }),
     h('p', { role: 'status', 'aria-live': 'polite' },
       state.status === 'submitting' ? 'Submitting request...' :
       state.status === 'success' ? 'Request submitted successfully' :
