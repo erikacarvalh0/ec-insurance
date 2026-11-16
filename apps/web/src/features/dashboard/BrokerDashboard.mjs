@@ -2,6 +2,7 @@ import { createElement as h, useEffect, useState } from 'react';
 import { fetchBrokerLeads } from './client.mjs';
 import { filterBrokerLeads } from './lead-filter.mjs';
 import { nextLeadOffset, previousLeadOffset } from './pagination.mjs';
+import { LeadDetails } from './LeadDetails.mjs';
 
 const PAGE_SIZE = 20;
 
@@ -9,6 +10,7 @@ export function BrokerDashboard({ token, fetchLeads = fetchBrokerLeads, onSessio
   const [state, setState] = useState({ status: 'idle', leads: [] });
   const [statusFilter, setStatusFilter] = useState('all');
   const [offset, setOffset] = useState(0);
+  const [selectedLeadId, setSelectedLeadId] = useState(null);
 
   useEffect(() => {
     if (!token) {
@@ -45,8 +47,10 @@ export function BrokerDashboard({ token, fetchLeads = fetchBrokerLeads, onSessio
           h('button', { type: 'button', disabled: state.leads.length < PAGE_SIZE, onClick: () => setOffset(nextLeadOffset(offset, PAGE_SIZE, state.leads.length)) }, 'Next page')),
 
         h('ul', null, ...filterBrokerLeads(state.leads, statusFilter).map((lead) =>
-          h('li', { key: lead.id }, `${lead.insuranceType ?? 'Insurance'} — ${lead.status ?? 'received'}`),
+          h('li', { key: lead.id }, `${lead.insuranceType ?? 'Insurance'} — ${lead.status ?? 'received'} `,
+            h('button', { type: 'button', onClick: () => setSelectedLeadId(lead.id), 'aria-label': `View lead ${lead.id}` }, 'View details')),
         )),
+        h(LeadDetails, { token, leadId: selectedLeadId, onClose: () => setSelectedLeadId(null) }),
       ),
   );
 }
