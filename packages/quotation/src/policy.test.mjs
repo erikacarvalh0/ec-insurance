@@ -31,3 +31,21 @@ test('sends malformed provider responses to manual review', () => {
   assert.equal(quote.status, 'manual_review');
   assert.deepEqual(quote.offers, []);
 });
+
+test('requires an explicit boolean simulation flag before publishing offers', () => {
+  for (const simulated of [undefined, null, false, 'false', 'true', 1, {}, []]) {
+    const quote = normalizeQuotation({
+      requestId: 'request-3',
+      status: 'completed',
+      simulated,
+      offers: [{ id: 'offer-3', premium: 123 }],
+    });
+
+    assert.deepEqual(quote, {
+      requestId: 'request-3',
+      status: 'manual_review',
+      simulated: false,
+      offers: [],
+    });
+  }
+});

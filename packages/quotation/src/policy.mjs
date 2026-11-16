@@ -13,7 +13,7 @@ export function normalizeQuotation(quotation) {
     };
   }
 
-  if (!quotation.simulated) {
+  if (quotation.simulated !== true) {
     return {
       requestId: quotation.requestId,
       status: 'manual_review',
