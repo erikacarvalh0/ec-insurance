@@ -1,5 +1,6 @@
 import { createProtectedLeadStatusHistoryHandler } from './lead-status-history-handler.mjs';
 import { createServer } from 'node:http';
+import { attachRequestCorrelation } from './request-logging.mjs';
 import { createNodeHttpAdapter } from './node-adapter.mjs';
 import { createPersistentApiServer } from './persistent-server.mjs';
 import { createProtectedLeadsHandler } from './leads-handler.mjs';
@@ -17,6 +18,7 @@ export function createSecureApiServer({ leadRepository, checkDatabase, verifyTok
   const handleLeadDetail = leadDetailRepository ? createNodeHttpAdapter(createProtectedLeadDetailHandler({ verifyToken, leadDetailRepository })) : null;
   const handleLogin = login ? createNodeHttpAdapter(createHttpLoginHandler({ login, limiter: loginLimiter })) : null;
   return createServer((request, response) => {
+    attachRequestCorrelation(request, response);
     if (/^\/api\/leads\/[^/]+\/status$/.test((request.url ?? '').split('?')[0]) && handleLeadStatus) {
       return handleLeadStatus(request, response);
     }
