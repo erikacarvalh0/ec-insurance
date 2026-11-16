@@ -5,7 +5,10 @@ export function createPrismaLeadListRepository(prisma) {
   }
 
   return {
-    async list(actor) {
+    async list(actor, { limit = 100, offset = 0 } = {}) {
+      if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100 || !Number.isSafeInteger(offset) || offset < 0 || offset > 100_000) {
+        throw new RangeError('Invalid pagination');
+      }
       let where;
 
       if (actor?.role === 'broker' && actor.userId) {
@@ -21,8 +24,9 @@ export function createPrismaLeadListRepository(prisma) {
       const records = await prisma.lead.findMany({
         where,
         select: { id: true, insuranceType: true, status: true, createdAt: true },
-        orderBy: { createdAt: 'desc' },
-        take: 100,
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        take: limit,
+        skip: offset,
       });
 
       return records.map((record) => ({
