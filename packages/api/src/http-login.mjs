@@ -1,6 +1,6 @@
 import { parseJsonBody } from './json-body.mjs';
 
-export function createHttpLoginHandler({ login }) {
+export function createHttpLoginHandler({ login, limiter }) {
   if (typeof login !== 'function') throw new TypeError('Login handler is required');
 
   return async function handleHttpLogin(request) {
@@ -9,6 +9,10 @@ export function createHttpLoginHandler({ login }) {
     }
     if (!request.headers?.['content-type']?.toLowerCase().startsWith('application/json')) {
       return { status: 415, body: { error: 'JSON content type required' } };
+    }
+
+    if (limiter && !limiter.allow(request.socket?.remoteAddress ?? '')) {
+      return { status: 429, headers: { 'Retry-After': '60' }, body: { error: 'Too many login attempts' } };
     }
 
     let body;
