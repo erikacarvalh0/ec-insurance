@@ -27,7 +27,8 @@ export function createPersistentIntakeHandler({ leadRepository }) {
     try {
       const lead = await leadRepository.create(request.body);
       return { status: 201, body: { success: true, lead } };
-    } catch {
+    } catch (error) {
+      if (error?.code === 'P2002') return { status: 409, body: { error: 'Duplicate intake' } };
       return { status: 500, body: { error: 'Internal server error' } };
     }
   };
