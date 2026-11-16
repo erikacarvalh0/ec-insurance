@@ -1,6 +1,4 @@
-import { randomUUID } from 'node:crypto';
-
-export function createIntakeController({ submit, createKey = randomUUID, onStateChange = () => {} }) {
+export function createIntakeController({ submit, createKey = () => crypto.randomUUID(), onStateChange = () => {} }) {
   if (typeof submit !== 'function' || typeof createKey !== 'function') {
     throw new TypeError('Submission and key generator are required');
   }
