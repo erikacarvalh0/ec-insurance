@@ -4,15 +4,20 @@ import { createPersistentApiServer } from './persistent-server.mjs';
 import { createProtectedLeadsHandler } from './leads-handler.mjs';
 import { createHttpLoginHandler } from './http-login.mjs';
 import { createProtectedLeadDetailHandler } from './lead-detail-handler.mjs';
+import { createProtectedLeadStatusHandler } from './lead-status-handler.mjs';
 
-export function createSecureApiServer({ leadRepository, checkDatabase, verifyToken, leadListRepository, leadDetailRepository, login, loginLimiter }) {
+export function createSecureApiServer({ leadRepository, checkDatabase, verifyToken, leadListRepository, leadDetailRepository, leadStatusRepository, login, loginLimiter }) {
   const intakeServer = createPersistentApiServer({ leadRepository, checkDatabase });
   const leads = createProtectedLeadsHandler({ verifyToken, leadListRepository });
 
   const handleLeads = createNodeHttpAdapter(leads);
+  const handleLeadStatus = leadStatusRepository ? createNodeHttpAdapter(createProtectedLeadStatusHandler({ verifyToken, leadStatusRepository })) : null;
   const handleLeadDetail = leadDetailRepository ? createNodeHttpAdapter(createProtectedLeadDetailHandler({ verifyToken, leadDetailRepository })) : null;
   const handleLogin = login ? createNodeHttpAdapter(createHttpLoginHandler({ login, limiter: loginLimiter })) : null;
   return createServer((request, response) => {
+    if (/^\/api\/leads\/[^/]+\/status$/.test((request.url ?? '').split('?')[0]) && handleLeadStatus) {
+      return handleLeadStatus(request, response);
+    }
     if ((request.url ?? '').split('?')[0] === '/api/login' && handleLogin) {
       return handleLogin(request, response);
     }
