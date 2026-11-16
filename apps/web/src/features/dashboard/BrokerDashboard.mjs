@@ -1,10 +1,14 @@
 import { createElement as h, useEffect, useState } from 'react';
 import { fetchBrokerLeads } from './client.mjs';
 import { filterBrokerLeads } from './lead-filter.mjs';
+import { nextLeadOffset, previousLeadOffset } from './pagination.mjs';
+
+const PAGE_SIZE = 20;
 
 export function BrokerDashboard({ token, fetchLeads = fetchBrokerLeads }) {
   const [state, setState] = useState({ status: 'idle', leads: [] });
   const [statusFilter, setStatusFilter] = useState('all');
+  const [offset, setOffset] = useState(0);
 
   useEffect(() => {
     if (!token) {
@@ -14,12 +18,12 @@ export function BrokerDashboard({ token, fetchLeads = fetchBrokerLeads }) {
 
     let active = true;
     setState({ status: 'loading', leads: [] });
-    fetchLeads({ token }).then(
+    fetchLeads({ token, limit: PAGE_SIZE, offset }).then(
       (leads) => { if (active) setState({ status: 'success', leads }); },
       () => { if (active) setState({ status: 'error', leads: [] }); },
     );
     return () => { active = false; };
-  }, [token, fetchLeads]);
+  }, [token, fetchLeads, offset]);
 
   return h('main', null,
     h('h1', null, 'Broker dashboard'),
@@ -30,7 +34,12 @@ export function BrokerDashboard({ token, fetchLeads = fetchBrokerLeads }) {
         h('label', { htmlFor: 'broker-lead-status' }, 'Filter by status'),
         h('select', { id: 'broker-lead-status', value: statusFilter, onChange: (event) => setStatusFilter(event.target.value) },
           ...['all', 'received', 'contacted', 'qualified', 'converted', 'closed'].map((status) => h('option', { key: status, value: status }, status))),
-        h('p', null, `Leads: ${filterBrokerLeads(state.leads, statusFilter).length}`),
+        h('p', null, `Leads on page: ${filterBrokerLeads(state.leads, statusFilter).length}`),
+        h('nav', { 'aria-label': 'Lead pages' },
+          h('button', { type: 'button', disabled: offset === 0, onClick: () => setOffset(previousLeadOffset(offset, PAGE_SIZE)) }, 'Previous page'),
+          h('span', null, ` Page ${Math.floor(offset / PAGE_SIZE) + 1} `),
+          h('button', { type: 'button', disabled: state.leads.length < PAGE_SIZE, onClick: () => setOffset(nextLeadOffset(offset, PAGE_SIZE, state.leads.length)) }, 'Next page')),
+
         h('ul', null, ...filterBrokerLeads(state.leads, statusFilter).map((lead) =>
           h('li', { key: lead.id }, `${lead.insuranceType ?? 'Insurance'} — ${lead.status ?? 'received'}`),
         )),
