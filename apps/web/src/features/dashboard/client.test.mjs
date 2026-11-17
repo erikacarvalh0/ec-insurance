@@ -47,3 +47,19 @@ test('preserves other failures without identifying them as expired sessions', as
     }), (error) => error.status === status);
   }
 });
+
+test('sends server-side filters with pagination', async () => {
+  await fetchBrokerLeads({ token: 'valid', limit: 20, offset: 0, status: 'quoted', insuranceType: 'auto', search: 'lead-1',
+    fetcher: async (url) => {
+      const query = new URL(url, 'http://localhost').searchParams;
+      assert.deepEqual(Object.fromEntries(query), { limit: '20', offset: '0', status: 'quoted', insuranceType: 'auto', search: 'lead-1' });
+      return { ok: true, json: async () => ({ leads: [] }) };
+    },
+  });
+});
+
+test('rejects invalid filters before requesting leads', async () => {
+  for (const filters of [{ status: 'unknown' }, { insuranceType: 'unknown' }, { search: 'a' }]) {
+    await assert.rejects(fetchBrokerLeads({ token: 'valid', ...filters, fetcher: async () => assert.fail('unexpected request') }), /filter|search/i);
+  }
+});
