@@ -6,7 +6,7 @@ export function createProtectedLeadAssignmentHandler({verifyToken,leadAssignment
   if(request?.method!=='PATCH')return{status:405,headers:{Allow:'PATCH'},body:{error:'Method not allowed'}};
   const authorization=request.headers?.authorization??request.headers?.Authorization;
   const match=typeof authorization==='string'&&/^Bearer ([A-Za-z0-9._~-]+)$/.exec(authorization);
-  let actor;try{actor=match&&verifyToken(match[1]);}catch{}
+  let actor;try{actor=match&&await verifyToken(match[1]);}catch{}
   if(!actor)return{status:401,body:{error:'Unauthorized'}};
   const path=/^\/api\/leads\/([A-Za-z0-9_-]{1,128})\/assignment$/.exec((request.url??'').split('?')[0]);
   if(!path)return{status:404,body:{error:'Not found'}};
