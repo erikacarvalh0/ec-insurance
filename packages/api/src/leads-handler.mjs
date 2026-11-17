@@ -17,7 +17,7 @@ export function createProtectedLeadsHandler({ verifyToken, leadListRepository })
 
     let actor;
     try {
-      actor = verifyToken(match[1]);
+      actor = await verifyToken(match[1]);
     } catch {
       return { status: 401, body: { error: 'Unauthorized' } };
     }
