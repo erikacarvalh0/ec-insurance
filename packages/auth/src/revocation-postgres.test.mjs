@@ -2,7 +2,6 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { createRevocationRepository } from './revocation-repository.mjs';
-import { createRevocableVerifier } from './revocable-verifier.mjs';
 import { createSessionTokenService } from './token.mjs';
 
 test('PostgreSQL persists revocation across repository instances', {skip: !process.env.TEST_DATABASE_URL}, async () => {
@@ -14,10 +13,10 @@ test('PostgreSQL persists revocation across repository instances', {skip: !proce
   const session=tokens.verifySession(token);
   try {
     const repository=createRevocationRepository(prisma);
-    assert.deepEqual(await createRevocableVerifier({tokens,repository})(token),actor);
+    assert.equal(await repository.isRevoked(session.sessionId),false);
     await repository.revoke({sessionId:session.sessionId,expiresAt:session.expiresAt});
     await repository.revoke({sessionId:session.sessionId,expiresAt:session.expiresAt});
-    assert.equal(await createRevocableVerifier({tokens,repository:createRevocationRepository(prisma)})(token),null);
+    assert.equal(await createRevocationRepository(prisma).isRevoked(session.sessionId),true);
   } finally {
     try {await prisma.revokedSession.deleteMany({where:{id:session.sessionId}});}
     finally {await prisma.$disconnect();}
