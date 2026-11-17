@@ -18,7 +18,8 @@
     "db:generate": "prisma generate",
     "preview:web": "node apps/web/src/preview.mjs",
     "dev:web": "vite apps/web --config apps/web/vite.config.mjs",
-    "build:web": "vite build apps/web --config apps/web/vite.config.mjs"
+    "build:web": "vite build apps/web --config apps/web/vite.config.mjs",
+    "test:postgres": "node scripts/test-postgres.mjs"
   },
   "dependencies": {
     "react": "^19.2.0",
