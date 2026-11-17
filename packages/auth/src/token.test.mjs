@@ -69,3 +69,13 @@ test('verifying signed session tokens rejects malformed team claims', () => {
     assert.equal(tokens.verify(`${payload}.${signature}`), null);
   }
 });
+
+test('sessions issued in the same second have distinct identifiers', () => {
+  const tokens = createSessionTokenService({ secret: 'a'.repeat(32), now: () => 100000 });
+  const actor = { userId: 'broker-1', role: 'broker' };
+  const first = tokens.issue(actor);
+  const second = tokens.issue(actor);
+  assert.notEqual(first, second);
+  assert.deepEqual(tokens.verify(first), actor);
+  assert.deepEqual(tokens.verify(second), actor);
+});

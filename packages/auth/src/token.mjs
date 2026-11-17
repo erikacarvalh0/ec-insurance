@@ -1,4 +1,4 @@
-import { createHmac, timingSafeEqual } from 'node:crypto';
+import { createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
 
 const ROLES = new Set(['broker', 'manager', 'admin']);
 
@@ -28,7 +28,7 @@ export function createSessionTokenService({ secret, now = Date.now, ttlSeconds =
       const payload = Buffer.from(JSON.stringify({
         sub: actor.userId, role: actor.role,
         ...(actor.teamId ? { teamId: actor.teamId } : {}),
-        iat: issuedAt, exp: expiresAt,
+        iat: issuedAt, exp: expiresAt, jti: randomUUID(),
       })).toString('base64url');
       return `${payload}.${sign(payload)}`;
     },
