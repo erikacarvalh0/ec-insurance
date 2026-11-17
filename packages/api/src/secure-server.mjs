@@ -9,7 +9,7 @@ import { createHttpLoginHandler } from './http-login.mjs';
 import { createProtectedLeadDetailHandler } from './lead-detail-handler.mjs';
 import { createProtectedLeadStatusHandler } from './lead-status-handler.mjs';
 
-export function createSecureApiServer({ leadRepository, checkDatabase, verifyToken, leadListRepository, leadDetailRepository, leadStatusRepository, leadStatusHistoryRepository, leadAssignmentRepository, login, loginLimiter }) {
+export function createSecureApiServer({ leadRepository, checkDatabase, verifyToken, leadListRepository, leadDetailRepository, leadStatusRepository, leadStatusHistoryRepository, leadAssignmentRepository, login, loginLimiter, logout }) {
   const intakeServer = createPersistentApiServer({ leadRepository, checkDatabase });
   const leads = createProtectedLeadsHandler({ verifyToken, leadListRepository });
 
@@ -19,8 +19,10 @@ export function createSecureApiServer({ leadRepository, checkDatabase, verifyTok
   const handleLeadStatus = leadStatusRepository ? createNodeHttpAdapter(createProtectedLeadStatusHandler({ verifyToken, leadStatusRepository })) : null;
   const handleLeadDetail = leadDetailRepository ? createNodeHttpAdapter(createProtectedLeadDetailHandler({ verifyToken, leadDetailRepository })) : null;
   const handleLogin = login ? createNodeHttpAdapter(createHttpLoginHandler({ login, limiter: loginLimiter })) : null;
+  const handleLogout = logout ? createNodeHttpAdapter(logout) : null;
   return createServer((request, response) => {
     attachRequestCorrelation(request, response);
+    if ((request.url ?? '').split('?')[0] === '/api/logout' && handleLogout) return handleLogout(request, response);
     if (/^\/api\/leads\/[^/]+\/assignment$/.test((request.url ?? '').split('?')[0]) && handleLeadAssignment) return handleLeadAssignment(request, response);
     if (/^\/api\/leads\/[^/]+\/status$/.test((request.url ?? '').split('?')[0]) && handleLeadStatus) {
       return handleLeadStatus(request, response);
