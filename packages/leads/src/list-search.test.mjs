@@ -33,8 +33,19 @@ test('rejects repeated status, type and pagination query parameters',async()=>{
 
 test('HTTP listing rejects unknown query keys before database access',async()=>{
  const handler=createProtectedLeadsHandler({verifyToken:()=>({role:'admin',userId:'admin-1'}),leadListRepository:{list:async()=>{throw Error('unexpected query');}}});
- for(const url of ['/api/leads?ownerId=another-user','/api/leads?teamId=other-team','/api/leads?status=received&debug=1']){
+ for(const url of ['/api/leads?ownerId=%25','/api/leads?teamId=other-team','/api/leads?status=received&debug=1']){
   const response=await handler({method:'GET',url,headers:{authorization:'Bearer valid'}});
   assert.equal(response.status,400,url);
  }
+});
+
+test('HTTP listing accepts owner and valid period, rejecting duplicate filters',async()=>{
+ let options;
+ const handler=createProtectedLeadsHandler({verifyToken:()=>({role:'broker',userId:'b'}),leadListRepository:{list:async(_,value)=>{options=value;return [];}}});
+ const request=url=>({method:'GET',url,headers:{authorization:'Bearer valid'}});
+ assert.equal((await handler(request('/api/leads?ownerId=another-user&from=2026-01-01&to=2026-02-01'))).status,200);
+ assert.equal(options.ownerId,'another-user');
+ assert.equal(options.from,'2026-01-01');
+ assert.equal(options.to,'2026-02-01');
+ assert.equal((await handler(request('/api/leads?ownerId=a&ownerId=b'))).status,400);
 });
