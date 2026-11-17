@@ -154,3 +154,10 @@ model BillingTransaction {
   createdAt DateTime @default(now())
   @@index([paymentId])
 }
+
+model RevokedSession {
+  id String @id
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  @@index([expiresAt])
+}
