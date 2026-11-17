@@ -82,3 +82,17 @@ test('rejects unsafe incoming request IDs and logs failures without secrets', as
   assert.equal(entries[0].requestId, response.headers['X-Request-Id']);
   assert.doesNotMatch(JSON.stringify(entries), /secret password|bad\\nheader/);
 });
+
+test('preserves upstream request correlation without logging twice', async () => {
+  const entries = [];
+  const response = fakeResponse();
+  response.getHeader = (name) => response.headers[name];
+  response.setHeader('X-Request-ID', 'upstream-id');
+  const adapter = createNodeHttpAdapter(async () => ({ status: 200 }), {
+    logger: { info: (entry) => entries.push(entry) },
+  });
+  await adapter({ method: 'GET', headers: { 'x-request-id': 'client-id' } }, response);
+  assert.equal(response.headers['X-Request-ID'], 'upstream-id');
+  assert.equal(response.headers['X-Request-Id'], undefined);
+  assert.equal(entries.length, 0);
+});
