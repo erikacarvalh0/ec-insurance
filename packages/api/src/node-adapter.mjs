@@ -8,12 +8,14 @@ export function createNodeHttpAdapter(handler, { logger = console } = {}) {
   }
 
   return async function handleNodeRequest(request, response) {
+    const upstreamId = response.getHeader?.('X-Request-ID');
+    const alreadyCorrelated = typeof upstreamId === 'string' && upstreamId.length > 0;
     const incomingId = request.headers?.['x-request-id'];
-    const requestId = typeof incomingId === 'string' && REQUEST_ID_PATTERN.test(incomingId)
+    const requestId = alreadyCorrelated ? upstreamId : typeof incomingId === 'string' && REQUEST_ID_PATTERN.test(incomingId)
       ? incomingId
       : randomUUID();
     const started = performance.now();
-    response.setHeader('X-Request-Id', requestId);
+    if (!alreadyCorrelated) response.setHeader('X-Request-Id', requestId);
 
     try {
       const result = await handler(request);
@@ -33,7 +35,7 @@ export function createNodeHttpAdapter(handler, { logger = console } = {}) {
       response.end(JSON.stringify({ error: 'Internal server error' }));
     } finally {
       // Log only fixed metadata: never log URLs, query strings, headers, bodies or PII.
-      logger.info(JSON.stringify({
+      if (!alreadyCorrelated) logger.info(JSON.stringify({
         event: 'http_request',
         requestId,
         method: request.method ?? 'UNKNOWN',
