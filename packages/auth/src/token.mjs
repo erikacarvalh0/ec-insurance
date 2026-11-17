@@ -12,7 +12,7 @@ export function createSessionTokenService({ secret, now = Date.now, ttlSeconds =
 
   const sign = (payload) => createHmac('sha256', secret).update(payload).digest('base64url');
 
-  return {
+  const service = {
     issue(actor) {
       if (typeof actor?.userId !== 'string' || !actor.userId || !ROLES.has(actor.role)) {
         throw new TypeError('A valid session actor is required');
@@ -33,6 +33,9 @@ export function createSessionTokenService({ secret, now = Date.now, ttlSeconds =
       return `${payload}.${sign(payload)}`;
     },
     verify(token) {
+      return service.verifySession(token)?.actor ?? null;
+    },
+    verifySession(token) {
       if (typeof token !== 'string') return null;
       const parts = token.split('.');
       if (parts.length !== 2 || !parts.every(Boolean)) return null;
@@ -49,10 +52,12 @@ export function createSessionTokenService({ secret, now = Date.now, ttlSeconds =
             data.iat > current || data.exp <= current ||
             typeof data.sub !== 'string' || !data.sub || !ROLES.has(data.role)) return null;
         if (data.teamId !== undefined && (typeof data.teamId !== 'string' || !data.teamId)) return null;
-        return { userId: data.sub, role: data.role, ...(data.teamId ? { teamId: data.teamId } : {}) };
+        if (data.jti !== undefined && (typeof data.jti !== 'string' || !/^[a-f0-9-]{36}$/.test(data.jti))) return null;
+        return { actor: { userId: data.sub, role: data.role, ...(data.teamId ? { teamId: data.teamId } : {}) }, sessionId: data.jti ?? null, issuedAt: data.iat, expiresAt: data.exp };
       } catch {
         return null;
       }
     },
   };
+  return service;
 }
