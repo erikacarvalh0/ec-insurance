@@ -11,8 +11,6 @@ export function createNotificationWorker({prisma,adapter,now=()=>new Date(),maxA
    if(claim.count!==1)return{status:'contended'};
    try{
     await adapter.send({idempotencyKey:job.idempotencyKey,subject:job.subject,body:job.body});
-    const completed=await prisma.notificationJob.updateMany({where:{id:job.id,status:'PROCESSING',attempts:job.attempts,AND:[{leaseExpiresAt},{leaseExpiresAt:{gt:now()}}]},data:{status:'SENT',leaseExpiresAt:null,attempts:job.attempts+1}});
-    return{status:completed.count===1?'sent':'stale'};
    }catch{
     const attempts=job.attempts+1;
     const dead=attempts>=maxAttempts;
@@ -20,6 +18,8 @@ export function createNotificationWorker({prisma,adapter,now=()=>new Date(),maxA
     const failed=await prisma.notificationJob.updateMany({where:{id:job.id,status:'PROCESSING',attempts:job.attempts,AND:[{leaseExpiresAt},{leaseExpiresAt:{gt:now()}}]},data:{status:dead?'DEAD_LETTER':'PENDING',leaseExpiresAt:null,attempts,...(dead?{}:{nextAttemptAt:new Date(now().getTime()+delayMs)})}});
     return{status:failed.count!==1?'stale':dead?'dead-letter':'retry'};
    }
+    const completed=await prisma.notificationJob.updateMany({where:{id:job.id,status:'PROCESSING',attempts:job.attempts,AND:[{leaseExpiresAt},{leaseExpiresAt:{gt:now()}}]},data:{status:'SENT',leaseExpiresAt:null,attempts:job.attempts+1}});
+    return{status:completed.count===1?'sent':'stale'};
   }
  };
 }
