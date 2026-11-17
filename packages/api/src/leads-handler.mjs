@@ -26,19 +26,24 @@ export function createProtectedLeadsHandler({ verifyToken, leadListRepository })
     let pagination;
     try {
       const query = new URL(request.url ?? '/api/leads', 'http://localhost').searchParams;
-      if ([...query.keys()].some(key => !['search','status','insuranceType','limit','offset'].includes(key))) return { status: 400, body: { error: 'Unknown query parameter' } };
+      if ([...query.keys()].some(key => !['search','status','insuranceType','limit','offset','ownerId','from','to'].includes(key))) return { status: 400, body: { error: 'Unknown query parameter' } };
       const limit = query.has('limit') ? Number(query.get('limit')) : 100;
       const offset = query.has('offset') ? Number(query.get('offset')) : 0;
       if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100 || !Number.isSafeInteger(offset) || offset < 0 || offset > 100_000) {
         return { status: 400, body: { error: 'Invalid pagination' } };
       }
-      if (['search','status','insuranceType','limit','offset'].some(key => query.getAll(key).length > 1)) return { status: 400, body: { error: 'Repeated query parameter' } };
+      if (['search','status','insuranceType','limit','offset','ownerId','from','to'].some(key => query.getAll(key).length > 1)) return { status: 400, body: { error: 'Repeated query parameter' } };
       const search = query.get('search') ?? undefined;
       if (search !== undefined && !/^[A-Za-z0-9_-]{2,64}$/.test(search)) return { status: 400, body: { error: 'Invalid search' } };
       const status = query.get('status') ?? undefined;
       const insuranceType = query.get('insuranceType') ?? undefined;
       if ((status !== undefined && !STATUS_FILTERS.has(status)) || (insuranceType !== undefined && !TYPE_FILTERS.has(insuranceType))) return { status: 400, body: { error: 'Invalid filters' } };
-      pagination = { limit, offset, ...(status ? { status } : {}), ...(insuranceType ? { insuranceType } : {}), ...(search ? { search } : {}) };
+      const ownerId = query.get('ownerId') ?? undefined;
+      const from = query.get('from') ?? undefined;
+      const to = query.get('to') ?? undefined;
+      const valid = value => /^\d{4}-\d{2}-\d{2}$/.test(value) && Number.isFinite(Date.parse(value)) && new Date(value).toISOString().slice(0,10) === value;
+      if ((ownerId !== undefined && !/^[A-Za-z0-9_-]{1,64}$/.test(ownerId)) || (from !== undefined && !valid(from)) || (to !== undefined && !valid(to)) || (from && to && from >= to)) return {status:400,body:{error:'Invalid filters'}};
+      pagination = { limit, offset, ...(ownerId ? {ownerId} : {}), ...(from ? {from} : {}), ...(to ? {to} : {}), ...(status ? { status } : {}), ...(insuranceType ? { insuranceType } : {}), ...(search ? { search } : {}) };
     } catch {
       return { status: 400, body: { error: 'Invalid pagination' } };
     }
