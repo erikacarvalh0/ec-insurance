@@ -9,3 +9,10 @@ test('emits JSON logs with request ID, method, path and status but no secrets', 
   assert.deepEqual(entries[0],{event:'http_request',requestId:'abc',method:'GET',path:'/api/leads',status:200,durationMs:12});
   assert.doesNotMatch(JSON.stringify(entries),/secret|private@example.com/);
 });
+
+test('logs route templates rather than arbitrary identifiers or unknown paths', () => {
+  const entries=[];
+  const log=createRequestLogger({write:(line)=>entries.push(JSON.parse(line))});
+  for (const url of ['/api/leads/private-id/status', '/secret@example.com']) log({id:'abc',method:'GET',url,status:200,durationMs:1});
+  assert.deepEqual(entries.map(entry=>entry.path),['/api/leads/:id/status','/unknown']);
+});
