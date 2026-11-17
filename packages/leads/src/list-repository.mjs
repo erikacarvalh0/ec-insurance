@@ -8,7 +8,7 @@ export function createPrismaLeadListRepository(prisma) {
   }
 
   return {
-    async list(actor, { limit = 100, offset = 0, status, insuranceType, search } = {}) {
+    async list(actor, { limit = 100, offset = 0, status, insuranceType, search, ownerId, from, to } = {}) {
       if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100 || !Number.isSafeInteger(offset) || offset < 0 || offset > 100_000) {
         throw new RangeError('Invalid pagination');
       }
@@ -28,6 +28,15 @@ export function createPrismaLeadListRepository(prisma) {
       if (search !== undefined && (typeof search !== 'string' || !/^[A-Za-z0-9_-]{2,64}$/.test(search))) throw new TypeError('Invalid search');
       where = { ...where, ...(status ? { status: status.toUpperCase() } : {}), ...(insuranceType ? { insuranceType: insuranceType.toUpperCase() } : {}), ...(search ? { id: { startsWith: search } } : {}) };
 
+      if (ownerId !== undefined) {
+        if (typeof ownerId !== 'string' || !/^[A-Za-z0-9_-]{1,64}$/.test(ownerId)) throw new TypeError('Invalid owner');
+        where.AND = [{ ownerId }];
+      }
+      if (from !== undefined || to !== undefined) {
+        const valid = value => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) && Number.isFinite(Date.parse(value)) && new Date(value).toISOString().slice(0,10) === value;
+        if ((from !== undefined && !valid(from)) || (to !== undefined && !valid(to)) || (from && to && from >= to)) throw new TypeError('Invalid period');
+        where.createdAt = { ...(from ? { gte: new Date(from) } : {}), ...(to ? { lt: new Date(to) } : {}) };
+      }
       const records = await prisma.lead.findMany({
         where,
         select: { id: true, insuranceType: true, status: true, createdAt: true },
