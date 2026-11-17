@@ -1,0 +1,20 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { createSessionTokenService } from '../../auth/src/token.mjs';
+import { createRevocableVerifier } from '../../auth/src/revocable-verifier.mjs';
+import { createHttpLogoutHandler } from './http-logout.mjs';
+import { createProtectedLeadsHandler } from './leads-handler.mjs';
+test('logout prevents reuse of signed token on protected leads',async()=>{
+ const tokens=createSessionTokenService({secret:'a'.repeat(32)});
+ const revoked=new Set();
+ const repository={revoke:async s=>revoked.add(s.sessionId),isRevoked:async id=>revoked.has(id)};
+ const token=tokens.issue({userId:'broker',role:'broker'});
+ const headers={authorization:`Bearer ${token}`};
+ let reads=0;
+ const leads=createProtectedLeadsHandler({verifyToken:createRevocableVerifier({tokens,repository}),leadListRepository:{list:async()=>{reads++;return [];}}});
+ const logout=createHttpLogoutHandler({tokens,repository});
+ assert.equal((await leads({method:'GET',headers})).status,200);
+ assert.equal((await logout({method:'POST',headers})).status,204);
+ assert.equal((await leads({method:'GET',headers})).status,401);
+ assert.equal(reads,1);
+});
