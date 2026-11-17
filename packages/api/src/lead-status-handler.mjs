@@ -9,7 +9,7 @@ export function createProtectedLeadStatusHandler({ verifyToken, leadStatusReposi
     const auth = request.headers?.authorization ?? request.headers?.Authorization;
     const match = typeof auth === 'string' && /^Bearer ([A-Za-z0-9._~-]+)$/.exec(auth);
     let actor;
-    try { actor = match && verifyToken(match[1]); } catch { /* Invalid token. */ }
+    try { actor = match && await verifyToken(match[1]); } catch { /* Invalid token. */ }
     if (!actor) return { status: 401, body: { error: 'Unauthorized' } };
     const path = /^\/api\/leads\/([A-Za-z0-9_-]{1,128})\/status$/.exec((request.url ?? '').split('?')[0]);
     if (!path) return { status: 404, body: { error: 'Not found' } };
