@@ -33,3 +33,14 @@ test('does not mark a delivered notification sent after its lease expires',async
  const worker=createNotificationWorker({prisma,now:()=>clock,adapter:{send:async()=>{clock=new Date('2026-11-16T20:02:00Z');}}});
  assert.equal((await worker.processOne()).status,'stale');assert.equal(status,'PROCESSING');
 });
+
+test('does not schedule a retry when persistence fails after delivery',async()=>{
+ const job={id:'j1',subject:'Hello',body:'Message',idempotencyKey:'k',attempts:0};
+ let writes=0;
+ const prisma={notificationJob:{findFirst:async()=>job,updateMany:async()=>{
+  writes++;if(writes===1)return{count:1};throw Error('database unavailable');
+ }}};
+ const worker=createNotificationWorker({prisma,adapter:{send:async()=>{}}});
+ await assert.rejects(worker.processOne(),/database unavailable/);
+ assert.equal(writes,2);
+});
