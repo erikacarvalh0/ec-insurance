@@ -7,7 +7,7 @@ import { createPrismaLeadStatusRepository } from '../../leads/src/status-reposit
 import { checkDatabaseConnection } from '../../leads/src/database.mjs';
 import { createSecureApiServer } from './secure-server.mjs';
 
-export function createPrismaSecureRuntime({ prisma, verifyToken, login, loginLimiter }) {
+export function createPrismaSecureRuntime({ prisma, verifyToken, login, loginLimiter, logout }) {
   if (typeof prisma?.$disconnect !== 'function') {
     throw new TypeError('Prisma client must support disconnection');
   }
@@ -23,6 +23,7 @@ export function createPrismaSecureRuntime({ prisma, verifyToken, login, loginLim
     verifyToken,
     login,
     loginLimiter,
+    logout,
   });
 
   return {
