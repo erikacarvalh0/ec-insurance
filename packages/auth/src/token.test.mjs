@@ -79,3 +79,14 @@ test('sessions issued in the same second have distinct identifiers', () => {
   assert.deepEqual(tokens.verify(first), actor);
   assert.deepEqual(tokens.verify(second), actor);
 });
+
+test('exposes authenticated session metadata for revocation checks', () => {
+  const tokens = createSessionTokenService({ secret: 'a'.repeat(32), now: () => 100000 });
+  const actor = { userId: 'broker-1', role: 'broker' };
+  const token = tokens.issue(actor);
+  const claims = tokens.verifySession(token);
+  assert.deepEqual(claims.actor, actor);
+  assert.match(claims.sessionId, /^[a-f0-9-]{36}$/);
+  assert.equal(claims.expiresAt, 3700);
+  assert.equal(tokens.verifySession(token + 'x'), null);
+});
