@@ -119,3 +119,38 @@ model NotificationJob {
  @@index([status, nextAttemptAt])
  @@index([status, leaseExpiresAt])
 }
+
+model Invoice {
+  id String @id @default(uuid())
+  idempotencyKey String @unique
+  amountCents BigInt
+  currency String @default("BRL")
+  status String @default("OPEN")
+  createdAt DateTime @default(now())
+  payments Payment[]
+}
+
+model Payment {
+  id String @id @default(uuid())
+  invoiceId String
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+  idempotencyKey String @unique
+  amountCents BigInt
+  currency String @default("BRL")
+  status String @default("PENDING")
+  createdAt DateTime @default(now())
+  transactions BillingTransaction[]
+  @@index([invoiceId])
+}
+
+model BillingTransaction {
+  id String @id @default(uuid())
+  paymentId String
+  payment Payment @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+  idempotencyKey String @unique
+  amountCents BigInt
+  currency String @default("BRL")
+  status String @default("PENDING")
+  createdAt DateTime @default(now())
+  @@index([paymentId])
+}
