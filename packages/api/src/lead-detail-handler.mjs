@@ -6,7 +6,7 @@ export function createProtectedLeadDetailHandler({ verifyToken, leadDetailReposi
     const match = typeof auth === 'string' && /^Bearer ([A-Za-z0-9._~-]+)$/.exec(auth);
     if (!match) return { status: 401, body: { error: 'Unauthorized' } };
     let actor;
-    try { actor = verifyToken(match[1]); } catch { return { status: 401, body: { error: 'Unauthorized' } }; }
+    try { actor = await verifyToken(match[1]); } catch { return { status: 401, body: { error: 'Unauthorized' } }; }
     if (!actor) return { status: 401, body: { error: 'Unauthorized' } };
     const path = (request.url ?? '').split('?')[0];
     const matchPath = /^\/api\/leads\/([A-Za-z0-9_-]{1,128})$/.exec(path);

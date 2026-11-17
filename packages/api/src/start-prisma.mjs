@@ -1,3 +1,5 @@
+import { createRevocableVerifier } from '../../auth/src/revocable-verifier.mjs';
+import { createRevocationRepository } from '../../auth/src/revocation-repository.mjs';
 import { PrismaClient } from '@prisma/client';
 
 import { createPrismaSecureRuntime } from './secure-runtime.mjs';
@@ -21,7 +23,7 @@ if (!process.env.SESSION_SECRET) {
 const sessionTokens = createSessionTokenService({ secret: process.env.SESSION_SECRET });
 const prisma = new PrismaClient();
 const login = createPrismaLogin({ prisma, issueToken: sessionTokens.issue });
-const runtime = createPrismaSecureRuntime({ prisma, verifyToken: sessionTokens.verify, login, loginLimiter: createLoginRateLimiter() });
+const runtime = createPrismaSecureRuntime({ prisma, verifyToken: createRevocableVerifier({ tokens: sessionTokens, repository: createRevocationRepository(prisma) }), login, loginLimiter: createLoginRateLimiter() });
 
 const host = process.env.HOST ?? '127.0.0.1';
 runtime.server.listen(port, host, () => {

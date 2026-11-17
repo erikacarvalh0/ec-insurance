@@ -7,7 +7,7 @@ test('Prisma startup verifies signed sessions before exposing broker leads', () 
   assert.match(source, /createPrismaSecureRuntime/);
   assert.match(source, /createSessionTokenService/);
   assert.match(source, /SESSION_SECRET/);
-  assert.match(source, /verifyToken:\s*sessionTokens\.verify/);
+  assert.match(source, /verifyToken:\s*createRevocableVerifier/);
 });
 
 test('API refuses to start without a configured signing secret', () => {
