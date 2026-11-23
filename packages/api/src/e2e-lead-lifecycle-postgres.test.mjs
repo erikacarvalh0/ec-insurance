@@ -28,12 +28,22 @@ test('HTTP intake to broker CRM is persisted and scoped in PostgreSQL',{skip:!pr
     const denied=await get({role:'broker',userId:other});
     assert.equal(denied.status,200);
     assert.ok(!(await denied.json()).leads.some(x=>x.id===leadId));
+    const auth={authorization:`Bearer ${tokens.issue({role:'broker',userId:owner})}`};
+    const changed=await fetch(base+`/api/leads/${leadId}/status`,{
+      method:'PATCH',headers:{...auth,'content-type':'application/json'},body:JSON.stringify({status:'processing'})
+    });
+    assert.equal(changed.status,200);
+    const history=await fetch(base+`/api/leads/${leadId}/status-history`,{headers:auth});
+    assert.equal(history.status,200);
+    assert.ok((await history.json()).history.some(x=>x.toStatus==='processing'));
+    const otherHistory=await fetch(base+`/api/leads/${leadId}/status-history`,{headers:{authorization:`Bearer ${tokens.issue({role:'broker',userId:other})}`}});
+    assert.equal(otherHistory.status,404);
     const duplicate=await fetch(base+'/api/intake',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({
       insuranceType:'auto',contact:{name:'Integration Test',email:'test@example.invalid',phone:'11999999999'},details:{vehicleModel:'Test',vehicleYear:2020},idempotencyKey:key
     })});
     assert.equal(duplicate.status,409);
   }finally{
-    try{await prisma.lead.deleteMany({where:{idempotencyKey:key}});}
+    try{if(leadId)await prisma.leadStatusHistory.deleteMany({where:{leadId}});await prisma.lead.deleteMany({where:{idempotencyKey:key}});}
     finally{await runtime.close();}
   }
 });
