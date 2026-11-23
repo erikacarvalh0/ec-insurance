@@ -15,8 +15,7 @@ test('HTTP intake to broker CRM is persisted and scoped in PostgreSQL',{skip:!pr
   let leadId;
   try{
     const intake=await fetch(base+'/api/intake',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({
-      insuranceType:'auto',contactName:'Integration Test',contactEmail:'test@example.invalid',
-      contactPhone:'11999999999',idempotencyKey:key
+      insuranceType:'auto',contact:{name:'Integration Test',email:'test@example.invalid',phone:'11999999999'},details:{vehicleModel:'Test',vehicleYear:2020},idempotencyKey:key
     })});
     assert.equal(intake.status,201,await intake.text());
     const created=await prisma.lead.findUniqueOrThrow({where:{idempotencyKey:key}});
@@ -30,8 +29,7 @@ test('HTTP intake to broker CRM is persisted and scoped in PostgreSQL',{skip:!pr
     assert.equal(denied.status,200);
     assert.ok(!(await denied.json()).leads.some(x=>x.id===leadId));
     const duplicate=await fetch(base+'/api/intake',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({
-      insuranceType:'auto',contactName:'Integration Test',contactEmail:'test@example.invalid',
-      contactPhone:'11999999999',idempotencyKey:key
+      insuranceType:'auto',contact:{name:'Integration Test',email:'test@example.invalid',phone:'11999999999'},details:{vehicleModel:'Test',vehicleYear:2020},idempotencyKey:key
     })});
     assert.equal(duplicate.status,409);
   }finally{
