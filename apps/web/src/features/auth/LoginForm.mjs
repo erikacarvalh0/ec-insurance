@@ -1,5 +1,7 @@
 import { createElement as h, useState } from 'react';
 
+import { EcdsButton } from '../../ecds-v1.mjs';
+
 export function LoginForm({ onSubmit = () => {}, submitting = false, error = '' }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -17,6 +19,6 @@ export function LoginForm({ onSubmit = () => {}, submitting = false, error = '' 
     h('input', { id: 'broker-password', name: 'password', type: 'password', autoComplete: 'current-password', required: true,
       value: password, onChange: (event) => setPassword(event.target.value) }),
     error ? h('p', { role: 'alert' }, error) : null,
-    h('button', { type: 'submit', disabled: submitting }, submitting ? 'Signing in...' : 'Sign in'),
+    h(EcdsButton, { type: 'submit', disabled: submitting }, submitting ? 'Signing in...' : 'Sign in'),
   );
 }
