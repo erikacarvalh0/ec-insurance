@@ -1,3 +1,4 @@
+import { EcdsButton } from '../../ecds-v1.mjs';
 import { createElement as h, useEffect, useState } from 'react';
 import { fetchLeadDetails } from './lead-details-client.mjs';
 
@@ -12,7 +13,7 @@ export function LeadDetails({token,leadId,fetchDetails=fetchLeadDetails,onClose}
  if(!leadId||!token)return h('p',null,'Select a lead to view details');
  return h('section',{'aria-label':'Lead details'},
   h('h2',null,'Lead details'),
-  h('button',{type:'button',onClick:onClose},'Close details'),
+  h(EcdsButton,{type:'button',onClick:onClose},'Close details'),
   state.status==='loading'?h('p',{role:'status'},'Loading lead details...'):
   state.status==='error'?h('p',{role:'alert'},'Unable to load lead details'):
   state.status==='success'?h('div',null,
