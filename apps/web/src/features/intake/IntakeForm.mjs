@@ -1,3 +1,4 @@
+import { EcdsButton } from '../../ecds-v1.mjs';
 import { createElement as h } from 'react';
 
 const FIELD_GROUPS = {
@@ -36,7 +37,7 @@ export function IntakeForm({ insuranceType = 'auto', onSubmit }) {
         h('legend', null, 'Insurance details'),
         ...FIELD_GROUPS[selectedType].map(([name, label, type]) => field(name, label, type)),
       ),
-      h('button', { type: 'submit' }, 'Request quotation'),
+      h(EcdsButton, { type: 'submit' }, 'Request quotation'),
     ),
   );
 }

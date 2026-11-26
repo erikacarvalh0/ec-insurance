@@ -1,3 +1,4 @@
+import { EcdsButton } from '../../ecds-v1.mjs';
 import { createElement as h, useEffect, useState } from 'react';
 import { fetchBrokerLeads } from './client.mjs';
 import { nextLeadOffset, previousLeadOffset } from './pagination.mjs';
@@ -53,7 +54,7 @@ export function BrokerDashboard({ token, fetchLeads = fetchBrokerLeads, onSessio
         h('form', { onSubmit: (event) => { event.preventDefault(); setSearch(searchInput.trim()); setOffset(0); setSelectedLeadId(null); } },
           h('label', { htmlFor: 'broker-lead-search' }, 'Lead ID prefix'),
           h('input', { id: 'broker-lead-search', value: searchInput, onChange: (event) => setSearchInput(event.target.value), pattern: '[A-Za-z0-9_\\-]{2,64}', maxLength: 64 }),
-          h('button', { type: 'submit' }, 'Search')),
+          h(EcdsButton, { type: 'submit' }, 'Search')),
         h('form', { onSubmit: event => { event.preventDefault(); if (fromInput && toInput && fromInput >= toInput) { setFilterError('End date must be after start date'); return; } setFilterError(''); setAdvanced({...(ownerInput ? {ownerId:ownerInput} : {}), ...(fromInput ? {from:fromInput} : {}), ...(toInput ? {to:toInput} : {})}); setOffset(0); setSelectedLeadId(null); } },
           h('label', {htmlFor:'lead-owner'}, 'Broker ID'),
           h('input', {id:'lead-owner', value:ownerInput, pattern:'[A-Za-z0-9_\\\\-]{1,64}', onChange:e=>setOwnerInput(e.target.value)}),
@@ -61,17 +62,17 @@ export function BrokerDashboard({ token, fetchLeads = fetchBrokerLeads, onSessio
           h('input', {id:'lead-from',type:'date',value:fromInput,onChange:e=>setFromInput(e.target.value)}),
           h('label', {htmlFor:'lead-to'}, 'End date (UTC, exclusive)'),
           h('input', {id:'lead-to',type:'date',value:toInput,onChange:e=>setToInput(e.target.value)}),
-          h('button', {type:'submit'}, 'Apply filters'),
+          h(EcdsButton, {type:'submit'}, 'Apply filters'),
           filterError && h('p',{role:'alert'},filterError)),
         h('p', null, `Leads on page: ${state.leads.length}`),
         h('nav', { 'aria-label': 'Lead pages' },
-          h('button', { type: 'button', disabled: offset === 0, onClick: () => setOffset(previousLeadOffset(offset, PAGE_SIZE)) }, 'Previous page'),
+          h(EcdsButton, { type: 'button', disabled: offset === 0, onClick: () => setOffset(previousLeadOffset(offset, PAGE_SIZE)) }, 'Previous page'),
           h('span', null, ` Page ${Math.floor(offset / PAGE_SIZE) + 1} `),
-          h('button', { type: 'button', disabled: state.leads.length < PAGE_SIZE, onClick: () => setOffset(nextLeadOffset(offset, PAGE_SIZE, state.leads.length)) }, 'Next page')),
+          h(EcdsButton, { type: 'button', disabled: state.leads.length < PAGE_SIZE, onClick: () => setOffset(nextLeadOffset(offset, PAGE_SIZE, state.leads.length)) }, 'Next page')),
 
         h('ul', null, ...state.leads.map((lead) =>
           h('li', { key: lead.id }, `${lead.insuranceType ?? 'Insurance'} — ${lead.status ?? 'received'} `,
-            h('button', { type: 'button', onClick: () => setSelectedLeadId(lead.id), 'aria-label': `View lead ${lead.id}` }, 'View details')),
+            h(EcdsButton, { type: 'button', onClick: () => setSelectedLeadId(lead.id), 'aria-label': `View lead ${lead.id}` }, 'View details')),
         )),
         h(LeadDetails, { token, leadId: selectedLeadId, onClose: () => setSelectedLeadId(null) }),
       ),
