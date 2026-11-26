@@ -1,0 +1,22 @@
+name: ECDS v1 consumer preview
+on: [pull_request, workflow_dispatch]
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: erikacarvalh0/erikacarvalho-ds-v1
+          ref: 47e6e29bd0961cb3a19af2327389f118c1b71e26
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: yarn install --frozen-lockfile && npm pack --pack-destination "$RUNNER_TEMP"
+      - run: |
+          mkdir "$RUNNER_TEMP/consumer"
+          cd "$RUNNER_TEMP/consumer"
+          npm init -y
+          npm install react@19.2.0 react-dom@19.2.0 vite@6 "$RUNNER_TEMP"/erikacarvalho-react-1.0.0.tgz
+          echo '<div id="root"></div><script type="module" src="/main.jsx"></script>' > index.html
+          echo 'import React from "react";import {createRoot} from "react-dom/client";import {Button} from "@erikacarvalho/react/Button";import "@erikacarvalho/react/styles.css";createRoot(document.getElementById("root")).render(<Button text="Preview" action={()=>{}}/>);' > main.jsx
+          npx vite build
